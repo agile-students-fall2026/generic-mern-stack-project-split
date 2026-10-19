@@ -1,8 +1,15 @@
-# User Experience Design
+# UX Design & Information Architecture
 
-This repository contains instructions and files for two assignments that together comprise the user experience design phase of a web app.
+## 1. App Map
 
-Replace the contents of this file with the completed assignments, as described in:
+<img src="ux-design/app-map.png" width="800" alt="Application Map" />
 
-- [app map & wireframe instructions](instructions-0a-app-map-wireframes.md).
-- [prototype instructions](instructions-0b-prototyping.md)
+---
+
+## 2. Wireframes
+...
+
+---
+
+## 3. Prototype
+...
