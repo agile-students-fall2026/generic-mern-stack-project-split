@@ -1,3 +1,22 @@
+# Split
+
+Split- a web app for sharing expenses on trips and at group events between mulitple users. We're building it so a group can keep receipts and figure out who owes whom with ease, making everybody even at no time! 
+
+## Product Vision
+
+We want to make shared expenses easier to manage.
+
+- keep a group's expenses together in one event.
+- let friends/users join through an invite link without creating an account.
+- Split costs equally or by percentage, depending on the expense.
+- Show who owes whom and track payments. money is wired outside the app, and the recipient confirms when it arrives.
+
+## Design
+
+See [UX-DESIGN.md](UX-DESIGN.md) for our wireframes and prototypes.
+
+
+
 # Project Repository
 
 This repository will be used for team projects.
