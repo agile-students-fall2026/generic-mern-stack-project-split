@@ -15,7 +15,7 @@ We want to make shared expenses easier to manage.
 
 See [UX-DESIGN.md](UX-DESIGN.md) for our wireframes and prototypes.
 
-
+-------- DELETE INSTRUCTIONS BELOW WHEN SUBMITTING ----------
 
 # Project Repository
 
