@@ -1,3 +1,8 @@
-# Guide to Contributing
+# Contributing to Split
 
-Delete the contents of this file and replace with the contents of a proper guide to contributing to this project, as described in the [instructions](./instructions-0c-project-setup#contributingmd)
+Welcome to Team Split!
+
+This markdown document describes how our team plan to work together on Split. The practices below should be reviewed by the team before begin contributing and followed as works are being done. 
+
+This guide may be updated as the project develops. 
+
