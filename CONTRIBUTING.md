@@ -64,3 +64,20 @@ Each member shares:
     - Result is merged
     - Changes are documented.
 - Comply with all course policies. 
+
+## Local Development
+
+- The app is not set up yet.
+- The front-end and back-end folders only contain placeholder files.
+- No install, run, build, or test commands are available yet.
+- Once the app is set up, add:
+    - Setup steps
+    - How to run the app
+    - Build and test commands.
+- Keep secrets in a local .env file. Do not commit it.
+
+## Handling Disagreements
+
+- Discuss disagreements directly with the team.
+- Ask the Scrum Master for help with coordination, or the Product Owner to clarify product priorities.
+- If the issue remains unresolved, ask the instructor for guidance.
