@@ -24,14 +24,11 @@ At sprint planning, we:
 - ... review the priorities
 - ... choose user stories
 - ... break larger tasks into smaller tasks and spikes. 
+- ... estimate user stories with Planning Poker, using physical cards held up on camera (story points 1, 2, 3, 5, 8, 13, ?). With a standard deck: A=1, 2, 3, 5, 8, K=13, Joker=?.
 
-Our proposed stand-up days are:
-- Tuesday
-- Friday 
-- Sunday. 
+Each sprint lasts about 2 weeks and follows the course schedule. The Scrum Master and Product Owner roles rotate every sprint, so every member holds each role at least once. The current holders are listed in the README.
 
-Meeting times and the team's final agreement are still to be confirmed. 
-These times will be added here once agreed.
+Stand-ups are held on Tuesday, Friday, and Sunday at 8:00 PM ET in the team's Discord voice channel and last at most 15 minutes. Everyone attends live. After each stand-up, every member's answers are posted in the team's Discord stand-up thread.
 
 Each member shares:
 - DID:      What they have completed since the previous stand-up.
@@ -43,7 +40,9 @@ Each member shares:
 - Create a branch from the latest master in the team repository.
 - Keep commits focused with single-line messages. 
 - Push progress between stand-ups.
-- Open a pull request to the team's master branch. Include the related issue and checks performed.
+- Never commit directly to master.
+- Open a pull request to the team's master branch. GitHub defaults the base repository to the instructor's repository, so change it to ours. Include the related issue and checks performed.
+- Never approve your own pull request.
 - Review with the team before merging, then update the board.
 
 ## Contributions
