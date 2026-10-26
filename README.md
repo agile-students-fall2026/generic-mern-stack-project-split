@@ -1,6 +1,6 @@
 # Split
 
-Split- a web app for sharing expenses on trips and at group events between mulitple users. We're building it so a group can keep receipts and figure out who owes whom with ease, making everybody even at no time! 
+Split- a web app for sharing expenses on trips and at group events between mulitple users. We're building it so a group can keep receipts and figure out who owes whom with ease, making everybody even at no time!
 
 ## Product Vision
 
@@ -21,6 +21,12 @@ See [UX-DESIGN.md](UX-DESIGN.md) for our wireframes and prototypes.
 - [Chenxin Yan](https://github.com/cy2558)
 - [Eric](https://github.com/paper595)
 - Tony (GitHub profile to be added)
+
+### Scrum roles
+
+| Sprint | Scrum Master | Product Owner |
+| ------ | ------------ | ------------- |
+| 0      | Ryan Han     | Chenxin Yan   |
 
 ## Project Background
 
