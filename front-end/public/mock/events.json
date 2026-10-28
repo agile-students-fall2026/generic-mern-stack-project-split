@@ -1,0 +1,12 @@
+[
+  {
+    "id": "evt_lisbon",
+    "name": "Lisbon trip",
+    "status": "active",
+    "startDate": "2026-10-10",
+    "endDate": "2026-10-14",
+    "closedAt": null,
+    "participantCount": 5,
+    "totalCents": 31900
+  }
+]

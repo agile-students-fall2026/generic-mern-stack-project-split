@@ -1,0 +1,12 @@
+{
+  "read": {
+    "merchant": "Pingo Doce",
+    "totalCents": 3600,
+    "photoUrl": "https://picsum.photos/seed/r_scan/800/500"
+  },
+  "failed": {
+    "merchant": null,
+    "totalCents": null,
+    "photoUrl": "https://picsum.photos/seed/r_scan_blurry/800/500"
+  }
+}
