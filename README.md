@@ -27,6 +27,7 @@ See [UX-DESIGN.md](UX-DESIGN.md) for our wireframes and prototypes.
 | Sprint | Scrum Master | Product Owner |
 | ------ | ------------ | ------------- |
 | 0      | Ryan Han     | Chenxin Yan   |
+| 1      | Eric         | Ryan Han      |
 
 ## Project Background
 
