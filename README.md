@@ -38,7 +38,7 @@ Split began as a team project for NYU's Agile Development and DevOps course in F
 - Front-end: [React](https://react.dev/) 19 in plain JavaScript (JSX), built with [Vite](https://vite.dev/)
 - Routing: [React Router](https://reactrouter.com/) (`react-router-dom`) in declarative mode
 - Styling: [Tailwind CSS](https://tailwindcss.com/) v4
-- Linting: [ESLint](https://eslint.org/)
+- Linting and formatting: [ESLint](https://eslint.org/) and [Prettier](https://prettier.io/)
 
 ## Running the Front-End
 
@@ -63,6 +63,12 @@ Run these from the `front-end` folder.
 - `npm run build` builds the app for production into `front-end/dist`.
 - `npm run preview` serves the production build locally.
 - `npm run lint` checks the code with ESLint.
+- `npm run format` formats the code with Prettier.
+- `npm run format:check` checks the formatting without changing any files.
+
+### Code style
+
+We use [ESLint](https://eslint.org/) for linting and [Prettier](https://prettier.io/) for formatting. The Prettier settings are in `.prettierrc` at the repo root. Open the repo root in VS Code and install the recommended extensions (ESLint and Prettier) when prompted. The shared settings in `.vscode/settings.json` then format each file when you save it. To lint or format the whole front-end at once, run `npm run lint` or `npm run format` from the `front-end` folder.
 
 ## Contributing
 

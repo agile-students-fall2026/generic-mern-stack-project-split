@@ -22,7 +22,10 @@ function App() {
       <Route path="/join/:inviteCode" element={<JoinEvent />} />
       <Route path="/events/:eventId" element={<EventReceipts />} />
       <Route path="/events/:eventId/receipts/new" element={<AddReceipt />} />
-      <Route path="/events/:eventId/receipts/:receiptId" element={<ReceiptDetails />} />
+      <Route
+        path="/events/:eventId/receipts/:receiptId"
+        element={<ReceiptDetails />}
+      />
       <Route path="/events/:eventId/balances" element={<Balances />} />
       <Route path="/events/:eventId/settle-up" element={<SettleUp />} />
       <Route path="/events/:eventId/people" element={<People />} />

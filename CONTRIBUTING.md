@@ -66,7 +66,7 @@ Each member shares:
 
 ## Local Development
 
-- See [README.md](README.md#running-the-front-end) for how to set up, run, build, and lint the front-end.
+- See [README.md](README.md#running-the-front-end) for how to set up, run, build, lint, and format the front-end.
 - The back-end folder only contains a placeholder file for now.
 - Keep secrets in a local .env file. Do not commit it.
 
