@@ -66,13 +66,8 @@ Each member shares:
 
 ## Local Development
 
-- The app is not set up yet.
-- The front-end and back-end folders only contain placeholder files.
-- No install, run, build, or test commands are available yet.
-- Once the app is set up, add:
-    - Setup steps
-    - How to run the app
-    - Build and test commands.
+- See [README.md](README.md#running-the-front-end) for how to set up, run, build, lint, and format the front-end.
+- The back-end folder only contains a placeholder file for now.
 - Keep secrets in a local .env file. Do not commit it.
 
 ## Handling Disagreements
