@@ -125,6 +125,7 @@ Every page renders inside `Layout`, so the header and spacing stay the same on e
 | `EmptyState`    | centered `title` and `description` with an optional action as children                                           |
 | `Sheet`         | bottom sheet and every menu (Account, event Menu); `closeLabel="Done"` replaces Cancel                           |
 | `ConfirmDialog` | centered confirm with Cancel and `confirmLabel`; children go above the buttons (rename field)                    |
+| `InviteSheet`   | "Invite people" sheet with Copy link and Share: `eventName`, `inviteCode`, and `onClose`                         |
 
 Render `Sheet` and `ConfirmDialog` only while they are open, and close them from `onClose`. Both are built on `Modal`, which already handles Escape, backdrop clicks, focus, and page scrolling:
 
