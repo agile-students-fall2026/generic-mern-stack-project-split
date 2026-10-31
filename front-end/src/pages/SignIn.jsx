@@ -1,11 +1,13 @@
+import Layout from '../components/Layout.jsx'
+
 function SignIn() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold">Sign in</h1>
-      <p className="mt-2 text-gray-600">
+    <Layout title="Split">
+      <h1 className="text-heading font-bold">Sign in</h1>
+      <p className="mt-2 text-body text-muted">
         Sign in with your email and password.
       </p>
-    </main>
+    </Layout>
   )
 }
 

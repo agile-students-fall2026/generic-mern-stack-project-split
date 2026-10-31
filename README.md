@@ -113,6 +113,39 @@ const loaded = result?.eventId === eventId
 - Receipt photos are [Picsum](https://picsum.photos/) URLs stored in the JSON, such as `https://picsum.photos/seed/r_pingo/800/500`.
 - A missing mock file makes `api` reject the request, so handle it in `.catch`.
 
+### Shared components
+
+Every page renders inside `Layout`, so the header and spacing stay the same on every screen. The shared pieces live in `front-end/src/components/`, and the colors, font, and text sizes are Tailwind theme values in `src/index.css` (for example `text-muted`, `border-line`, `text-heading`).
+
+| Component       | Use it for                                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `Layout`        | page column and header: `title`, optional `subtitle`, `left` and `right` actions (a `Link` or button), and `nav` |
+| `BottomNav`     | event tab bar for `nav`: `eventId`; the event's organizer also gets the People tab                               |
+| `Button`        | `variant` `primary`, `outline`, or `text`; `small` for row actions; `to` makes it a `Link`                       |
+| `TextField`     | labelled input with `helper` or `error` text; other props go to the `<input>`                                    |
+| `SectionLabel`  | small grey heading above a group, like "Active" and "Past"                                                       |
+| `ListRow`       | one `<li>` with `title`, `subtitle`, and a `right` value; `to` makes the whole row a link                        |
+| `EmptyState`    | centered `title` and `description` with an optional action as children                                           |
+| `Sheet`         | bottom sheet and every menu (Account, event Menu); `closeLabel="Done"` replaces Cancel                           |
+| `ConfirmDialog` | centered confirm with Cancel and `confirmLabel`; children go above the buttons (rename field)                    |
+
+Render `Sheet` and `ConfirmDialog` only while they are open, and close them from `onClose`. Both are built on `Modal`, which already handles Escape, backdrop clicks, focus, and page scrolling:
+
+```jsx
+<>
+  <button type="button" onClick={() => setAccountOpen(true)}>
+    Account
+  </button>
+  {accountOpen && (
+    <Sheet title="Account" onClose={() => setAccountOpen(false)}>
+      <Button variant="outline" onClick={signOut}>
+        Sign out
+      </Button>
+    </Sheet>
+  )}
+</>
+```
+
 ### Code style
 
 We use [ESLint](https://eslint.org/) for linting and [Prettier](https://prettier.io/) for formatting. The Prettier settings are in `.prettierrc` at the repo root. Open the repo root in VS Code and install the recommended extensions (ESLint and Prettier) when prompted. The shared settings in `.vscode/settings.json` then format each file when you save it. To lint or format the whole front-end at once, run `npm run lint` or `npm run format` from the `front-end` folder.
