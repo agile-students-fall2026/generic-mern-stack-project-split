@@ -49,7 +49,7 @@ function InviteSheet({ eventName, inviteCode, onClose }) {
         readOnly
         aria-label="Invite link"
         value={link}
-        className="h-[46px] w-full rounded-lg border border-line bg-white px-3 focus:border-ink focus:ring-1 focus:ring-ink focus:outline-none"
+        className="h-[46px] w-full rounded-lg border border-line bg-white px-3 focus:border-ink focus:ring-1 focus:ring-ink focus:outline-hidden"
       />
       <p
         role="status"

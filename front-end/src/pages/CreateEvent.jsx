@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api.js'
+import CreatedEventsContext from '../CreatedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import TextField from '../components/TextField.jsx'
 import Button from '../components/Button.jsx'
 
 function CreateEvent() {
   const navigate = useNavigate()
+  const { addEvent } = useContext(CreatedEventsContext)
   const nameRef = useRef(null)
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState('')
@@ -32,6 +34,7 @@ function CreateEvent() {
     api
       .get('/create-event.json', { signal: requestRef.current.signal })
       .then(response => {
+        addEvent({ ...response.data, name: eventName })
         // replace, so Back from the new event goes to My events, not this form
         navigate(`/events/${response.data.id}`, {
           replace: true,

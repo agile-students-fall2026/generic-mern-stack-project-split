@@ -108,7 +108,7 @@ const loaded = result?.eventId === eventId
 | `scan-receipt.json` | receipt photo reading, with a `read` and a `failed` result                                                                           |
 
 - Amounts are whole cents (`31900` is $319.00). Dates are `YYYY-MM-DD`.
-- Responses to actions are fixed files, so keep what the user typed (for example the event name) and take only the generated fields (id, invite code, return link) from the response. Changes made in the app live in React state and reset on reload.
+- Responses to actions are fixed files, so keep what the user typed (for example the event name) and take only the generated fields (id, invite code, return link) from the response. Changes made in the app live in React state and reset on reload; events created in the app are shared through `src/CreatedEventsContext.js` so My Events shows them.
 - `evt_lisbon` starts with every payment `unpaid`. `evt_lisbon_settling` is the same trip later on, with Maya's payment to Alex `pending` and the rest `confirmed`. It is not in `events.json`, so open it by URL, for example `/events/evt_lisbon_settling/settle-up`.
 - Receipt photos are [Picsum](https://picsum.photos/) URLs stored in the JSON, such as `https://picsum.photos/seed/r_pingo/800/500`.
 - A missing mock file makes `api` reject the request, so handle it in `.catch`.

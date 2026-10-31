@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import api from '../api.js'
+import CreatedEventsContext from '../CreatedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import Button from '../components/Button.jsx'
 import SectionLabel from '../components/SectionLabel.jsx'
@@ -17,6 +18,11 @@ const shortDate = new Intl.DateTimeFormat('en-US', {
 })
 
 function eventSubtitle(event) {
+  const people = event.participantCount === 1 ? 'person' : 'people'
+  // a new event has no dates until its first receipt
+  if (event.status === 'active' && !event.startDate) {
+    return `${event.participantCount} ${people}`
+  }
   const dates =
     event.status === 'closed'
       ? `Closed ${shortDate.format(new Date(event.closedAt))}`
@@ -24,7 +30,6 @@ function eventSubtitle(event) {
           .formatRange(new Date(event.startDate), new Date(event.endDate))
           // same month: "Oct 10–14", not "Oct 10 – 14"
           .replace(/(\d)\s–\s(\d)/, '$1–$2')
-  const people = event.participantCount === 1 ? 'person' : 'people'
   return `${dates} · ${event.participantCount} ${people}`
 }
 
@@ -49,6 +54,7 @@ function renderEventList(events, emptyText) {
 
 function MyEvents() {
   const [events, setEvents] = useState([])
+  const { createdEvents } = useContext(CreatedEventsContext)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
 
@@ -93,7 +99,9 @@ function MyEvents() {
         <>
           <SectionLabel>Active</SectionLabel>
           {renderEventList(
-            events.filter(event => event.status === 'active'),
+            [...createdEvents, ...events].filter(
+              event => event.status === 'active',
+            ),
             'No active events.',
           )}
           <SectionLabel>Past</SectionLabel>

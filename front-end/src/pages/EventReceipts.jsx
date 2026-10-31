@@ -12,7 +12,9 @@ function EventReceipts() {
 
   return (
     <Layout title="Receipts" nav={<BottomNav eventId={eventId} />}>
-      <h1 className="text-heading font-bold">Receipts</h1>
+      <h1 tabIndex={-1} className="text-heading font-bold">
+        Receipts
+      </h1>
       <p className="mt-2 text-body text-muted">Receipts added to this event.</p>
       {invite && (
         <InviteSheet
