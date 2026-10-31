@@ -1,11 +1,13 @@
+import Layout from '../components/Layout.jsx'
+
 function JoinEvent() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold">Join event</h1>
-      <p className="mt-2 text-gray-600">
+    <Layout title="Split">
+      <h1 className="text-heading font-bold">Join event</h1>
+      <p className="mt-2 text-body text-muted">
         Enter your name to join. No account needed.
       </p>
-    </main>
+    </Layout>
   )
 }
 
