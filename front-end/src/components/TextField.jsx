@@ -17,7 +17,7 @@ function TextField({ id, label, helper, error, className = '', ...props }) {
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={note ? noteId : undefined}
-        className={`h-[46px] w-full rounded-lg border bg-white px-3 placeholder:text-muted focus:border-ink focus:ring-1 focus:ring-ink focus:outline-none ${error ? 'border-ink ring-1 ring-ink' : 'border-line'}`}
+        className={`h-[46px] w-full rounded-lg border bg-white px-3 placeholder:text-muted focus:border-ink focus:ring-1 focus:ring-ink focus:outline-hidden ${error ? 'border-ink ring-1 ring-ink' : 'border-line'}`}
         {...props}
       />
       {note && (

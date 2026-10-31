@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 // inside; this adds Escape and backdrop close and gives focus back on close.
 function Modal({ titleId, descriptionId, onClose, className, children }) {
   const dialogRef = useRef(null)
+  const pressedBackdrop = useRef(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -12,7 +13,13 @@ function Modal({ titleId, descriptionId, onClose, className, children }) {
     dialog.showModal()
     return () => {
       dialog.close()
-      opener?.focus()
+      // the opener can be gone by now (e.g. the form that opened it), so fall
+      // back to the page heading; give that h1 tabIndex={-1} to make it focusable
+      const target =
+        opener?.isConnected && opener !== document.body
+          ? opener
+          : document.querySelector('main h1')
+      target?.focus()
     }
   }, [])
 
@@ -27,9 +34,14 @@ function Modal({ titleId, descriptionId, onClose, className, children }) {
         event.preventDefault()
         onClose()
       }}
+      onPointerDown={event => {
+        pressedBackdrop.current = event.target === event.currentTarget
+      }}
       onClick={event => {
-        // the dialog element itself is only hit when clicking the backdrop
-        if (event.target === event.currentTarget) onClose()
+        // the dialog element itself is only hit on the backdrop; also require the
+        // press to start there, so a text selection dragged outside doesn't close it
+        if (pressedBackdrop.current && event.target === event.currentTarget)
+          onClose()
       }}
     >
       {children}
