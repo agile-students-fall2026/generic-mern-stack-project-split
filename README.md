@@ -73,24 +73,27 @@ Until the back-end exists, screens read mock JSON from `front-end/public/mock/`,
 ```jsx
 import api from '../api.js'
 
+// remember which eventId the result belongs to, so an old event or error
+// never shows while the next one loads
+const [result, setResult] = useState(null)
+
 useEffect(() => {
   // ignore a reply that arrives after eventId has changed
   let ignore = false
   api
-    .get(`/events/${eventId}.json`)
+    .get(`/events/${encodeURIComponent(eventId)}.json`)
     .then(response => {
-      if (!ignore) setEvent(response.data)
+      if (!ignore) setResult({ eventId, event: response.data })
     })
     .catch(() => {
-      if (!ignore) setError('Could not load this event.')
-    })
-    .finally(() => {
-      if (!ignore) setLoaded(true)
+      if (!ignore) setResult({ eventId, error: 'Could not load this event.' })
     })
   return () => {
     ignore = true
   }
 }, [eventId])
+
+const loaded = result?.eventId === eventId
 ```
 
 | File                | Back-end call it stands in for                                                                                                       |
