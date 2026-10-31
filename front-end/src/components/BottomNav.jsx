@@ -1,18 +1,47 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, matchPath, useLocation } from 'react-router-dom'
+import api from '../api.js'
+
+// Kept between pages, so the bar doesn't jump from 3 to 4 tabs on every tab
+const organizerByEvent = new Map()
 
 // Event tab bar fixed to the bottom of the page column.
-// Organizers get the extra People tab.
-function BottomNav({ eventId, isOrganizer = false }) {
+// The organizer of the event also gets the People tab.
+function BottomNav({ eventId }) {
   const { pathname } = useLocation()
-  const base = `/events/${eventId}`
+  const [isOrganizer, setIsOrganizer] = useState(
+    () => organizerByEvent.get(eventId) ?? false,
+  )
+
+  useEffect(() => {
+    let ignore = false
+    Promise.all([
+      api.get('/user.json'),
+      api.get(`/events/${encodeURIComponent(eventId)}.json`),
+    ])
+      .then(([user, event]) => {
+        const organizer = user.data.id === event.data.organizerId
+        organizerByEvent.set(eventId, organizer)
+        if (!ignore) setIsOrganizer(organizer)
+      })
+      // the page shows its own load error; the bar just keeps the 3 shared tabs
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [eventId])
+
   const tabs = [
-    { label: 'Receipts', to: base },
-    { label: 'Balances', to: `${base}/balances` },
-    { label: 'Settle up', to: `${base}/settle-up` },
+    { label: 'Receipts', path: '' },
+    { label: 'Balances', path: '/balances' },
+    { label: 'Settle up', path: '/settle-up' },
   ]
-  if (isOrganizer) tabs.push({ label: 'People', to: `${base}/people` })
-  // the most specific match wins, so receipt pages keep Receipts active
-  const current = tabs.findLast(tab => pathname.startsWith(tab.to))
+  if (isOrganizer) tabs.push({ label: 'People', path: '/people' })
+  // match the way the router does (ignores case); the most specific tab wins,
+  // so receipt pages keep Receipts active
+  const current = tabs.findLast(tab =>
+    matchPath({ path: `/events/:eventId${tab.path}`, end: false }, pathname),
+  )
 
   return (
     <nav
@@ -21,8 +50,8 @@ function BottomNav({ eventId, isOrganizer = false }) {
     >
       {tabs.map(tab => (
         <Link
-          key={tab.to}
-          to={tab.to}
+          key={tab.label}
+          to={`/events/${eventId}${tab.path}`}
           aria-current={tab === current ? 'page' : undefined}
           className={`flex items-center justify-center text-sm ${tab === current ? 'font-semibold text-ink underline underline-offset-4' : 'text-muted'}`}
         >

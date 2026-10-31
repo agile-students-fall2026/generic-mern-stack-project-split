@@ -120,7 +120,7 @@ Every page renders inside `Layout`, so the header and spacing stay the same on e
 | Component       | Use it for                                                                                                       |
 | --------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `Layout`        | page column and header: `title`, optional `subtitle`, `left` and `right` actions (a `Link` or button), and `nav` |
-| `BottomNav`     | event tab bar for `nav`: `eventId`, plus `isOrganizer` for the People tab                                        |
+| `BottomNav`     | event tab bar for `nav`: `eventId`; the event's organizer also gets the People tab                               |
 | `Button`        | `variant` `primary`, `outline`, or `text`; `small` for row actions; `to` makes it a `Link`                       |
 | `TextField`     | labelled input with `helper` or `error` text; other props go to the `<input>`                                    |
 | `SectionLabel`  | small grey heading above a group, like "Active" and "Past"                                                       |
@@ -132,13 +132,18 @@ Every page renders inside `Layout`, so the header and spacing stay the same on e
 Render `Sheet` and `ConfirmDialog` only while they are open, and close them from `onClose`. Both are built on `Modal`, which already handles Escape, backdrop clicks, focus, and page scrolling:
 
 ```jsx
-{accountOpen && (
-  <Sheet title="Account" onClose={() => setAccountOpen(false)}>
-    <Button variant="outline" onClick={signOut}>
-      Sign out
-    </Button>
-  </Sheet>
-)}
+<>
+  <button type="button" onClick={() => setAccountOpen(true)}>
+    Account
+  </button>
+  {accountOpen && (
+    <Sheet title="Account" onClose={() => setAccountOpen(false)}>
+      <Button variant="outline" onClick={signOut}>
+        Sign out
+      </Button>
+    </Sheet>
+  )}
+</>
 ```
 
 ### Code style
