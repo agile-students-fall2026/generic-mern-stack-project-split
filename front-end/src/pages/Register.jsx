@@ -1,7 +1,9 @@
 import Layout from '../components/Layout.jsx'
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 
 import api from '../api.js'
+import './Register.css'
 
 function Register() {
   const [message, setMessage] = useState('')
@@ -34,7 +36,7 @@ function Register() {
   return (
     <Layout title="Split">
       <h1 className="text-heading font-bold">Register</h1>
-      <form onSubmit={handleSubmit}>
+      <form className="register-form" onSubmit={handleSubmit}>
         <p>
           <label htmlFor="email">Email</label>
           <input id="email" type="email" name="email" />
@@ -48,6 +50,9 @@ function Register() {
         <button type="submit">Create account</button>
         <p>{message}</p>
       </form>
+      <p>
+        Already have an account? <Link to="/sign-in">Sign in</Link>
+      </p>
     </Layout>
   )
 }
