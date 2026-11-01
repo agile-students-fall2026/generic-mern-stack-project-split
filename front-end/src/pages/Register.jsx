@@ -44,7 +44,7 @@ function Register() {
 
         <p>
           <label htmlFor="password">Password</label>
-          <input id="password" name="password" type="password" />
+          <input id="password" name="password" type="password" minLength={8} />
         </p>
 
         <button type="submit">Create account</button>
