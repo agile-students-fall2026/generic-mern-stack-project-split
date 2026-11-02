@@ -1,0 +1,17 @@
+.join-form {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.join-form input {
+  border: 1px solid #777777;
+  padding: 8px;
+}
+
+.join-submit {
+  margin-top: 12px;
+  background-color: #eeeeee;
+}
+.join-error {
+  color: red;
+}
