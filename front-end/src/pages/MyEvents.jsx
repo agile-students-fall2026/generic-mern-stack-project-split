@@ -1,10 +1,12 @@
 import { useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../api.js'
 import CreatedEventsContext from '../CreatedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import Button from '../components/Button.jsx'
 import SectionLabel from '../components/SectionLabel.jsx'
 import ListRow from '../components/ListRow.jsx'
+import Sheet from '../components/Sheet.jsx'
 
 const money = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -57,6 +59,29 @@ function MyEvents() {
   const { createdEvents } = useContext(CreatedEventsContext)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [accountOpen, setAccountOpen] = useState(false)
+
+  // the signed in account, for "Signed in as" in the Account menu
+  useEffect(() => {
+    let ignore = false
+    api
+      .get('/user.json')
+      .then(response => {
+        if (!ignore) setUser(response.data)
+      })
+      // without it the menu still offers Sign out, just without the email
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  function signOut() {
+    // stands in for POST /auth/sign-out; replace, so Back doesn't return here
+    navigate('/sign-in', { replace: true })
+  }
 
   useEffect(() => {
     let ignore = false
@@ -80,7 +105,11 @@ function MyEvents() {
     <Layout
       title="My events"
       right={
-        <button type="button" className="py-2">
+        <button
+          type="button"
+          className="py-2"
+          onClick={() => setAccountOpen(true)}
+        >
           Account
         </button>
       }
@@ -110,6 +139,17 @@ function MyEvents() {
             'No past events yet.',
           )}
         </>
+      )}
+      {accountOpen && (
+        <Sheet
+          title="Account"
+          description={user ? `Signed in as ${user.email}` : undefined}
+          onClose={() => setAccountOpen(false)}
+        >
+          <Button variant="outline" onClick={signOut}>
+            Sign out
+          </Button>
+        </Sheet>
       )}
     </Layout>
   )
