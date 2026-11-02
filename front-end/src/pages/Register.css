@@ -1,0 +1,26 @@
+.register-form {
+  margin-bottom: 16px;
+  margin-top: 16px;
+}
+
+.register-form p {
+  margin-bottom: 12px;
+}
+
+.register-form label {
+  margin-bottom: 4px;
+  display: block;
+}
+
+.register-form input {
+  width: 100%;
+  border: 1px solid #777;
+  padding: 8px;
+}
+
+.register-form button {
+  border: 1px solid #777;
+  background-color: #eee;
+  padding: 8px 12px;
+  cursor: pointer;
+}
