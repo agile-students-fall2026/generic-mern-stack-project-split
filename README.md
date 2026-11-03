@@ -20,7 +20,7 @@ See [UX-DESIGN.md](UX-DESIGN.md) for our wireframes and prototypes.
 - [Ryan Han](https://github.com/jiruiryanhan)
 - [Chenxin Yan](https://github.com/cy2558)
 - [Eric](https://github.com/paper595)
-- Tony (GitHub profile to be added)
+- [Tony Teng](https://github.com/Ljker233)
 
 ### Scrum roles
 
