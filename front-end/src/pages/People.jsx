@@ -4,10 +4,10 @@ import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
-// import Button from '../components/Button.jsx'
-// import Sheet from '../components/Sheet.jsx'
-// import ConfirmDialog from '../components/ConfirmDialog.jsx'
-// import TextField from '../components/TextField.jsx'
+import Button from '../components/Button.jsx'
+import Sheet from '../components/Sheet.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
+import TextField from '../components/TextField.jsx'
 
 // Turns "2026-10-14" into "Oct 14"
 function formatDate(date) {
@@ -24,13 +24,10 @@ function getSubtitle(person, receipts) {
     return 'Organizer · you'
   }
 
-  // find out if this person is on any receipt.
-  // A person is "on a receipt" if receipt.payerId is their id,
-  // OR if any share in receipt.shares has participantId equal to their id.
-
+  // is this person the payer or in the split of any receipt?
   let onAReceipt = false
   for (const receipt of receipts) {
-    if (receipt.playerId === person.id) {
+    if (receipt.payerId === person.id) {
       onAReceipt = true
     }
     for (const share of receipt.shares) {
@@ -52,11 +49,13 @@ function People() {
   const [participants, setParticipants] = useState([])
   const [error, setError] = useState('')
 
-  // add state for the person whose Options menu is open.
-  // It should start as null, which means "no menu open".
+  // the person whose Options menu is open (null means closed)
+  const [selected, setSelected] = useState(null)
 
-  // TODO: add state for the rename dialog:
-  //   renameOpen (true or false), newName (text), nameError (text)
+  // the rename dialog: is it open, what is typed, and any error
+  const [renameOpen, setRenameOpen] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [nameError, setNameError] = useState('')
 
   // load the event when the page opens
   useEffect(() => {
@@ -71,14 +70,29 @@ function People() {
       })
   }, [eventId])
 
-  // TODO: write openRename()
+  function openRename() {
+    setNewName(selected.name)
+    setNameError('')
+    setRenameOpen(true)
+  }
 
-  // TODO: write closeRename()
+  function closeRename() {
+    setRenameOpen(false)
+    setSelected(null)
+  }
 
-  // TODO: write saveRename()
-  //   if newName is empty (after .trim()), set nameError to 'Enter a name.'
-  //   and stop. Otherwise build a NEW list where only the selected person
-  //   has the new name, save it with setParticipants, then closeRename().
+  function saveRename() {
+    if (newName.trim() === '') {
+      setNameError('Enter a name.')
+      return
+    }
+    // make a new list where only the selected person has the new name
+    const updated = participants.map(person =>
+      person.id === selected.id ? { ...person, name: newName.trim() } : person,
+    )
+    setParticipants(updated)
+    closeRename()
+  }
 
   // the organizer is "you" for now, since only the organizer sees this page
   const organizer = participants.find(person => person.role === 'organizer')
@@ -110,30 +124,57 @@ function People() {
                 key={person.id}
                 title={person.name}
                 subtitle={getSubtitle(person, event.receipts)}
-                // TODO: add right={...} with a small outline Button
-                // that says Options. Only show it when the person is NOT the
-                // organizer. Clicking it should remember this person in state.
+                right={
+                  person.role !== 'organizer' && (
+                    <Button
+                      variant="outline"
+                      small
+                      onClick={() => setSelected(person)}
+                    >
+                      Options
+                    </Button>
+                  )
+                }
               />
             ))}
           </ul>
         </>
       )}
 
-      {/* TODO: Options menu (wireframe 32)
-          Show a <Sheet> only while a person is selected (and rename is closed).
-          title: the person's name
-          description: getSubtitle(...) for that person
-          onClose: clear the selected person
-          Inside: two outline Buttons, "Rename" (runs openRename)
-          and "Merge into…" (does nothing yet, that is #53) */}
+      {/* Options menu (wireframe 32) */}
+      {selected && !renameOpen && (
+        <Sheet
+          title={selected.name}
+          description={getSubtitle(selected, event.receipts)}
+          onClose={() => setSelected(null)}
+        >
+          <Button variant="outline" onClick={openRename}>
+            Rename
+          </Button>
+          {/* Merge into is built in #53 */}
+          <Button variant="outline">Merge into…</Button>
+        </Sheet>
+      )}
 
-      {/* TODO: Rename dialog (wireframe 33)
-          Show a <ConfirmDialog> only while renameOpen is true.
-          title "Rename participant", confirmLabel "Save",
-          onConfirm runs saveRename, onClose runs closeRename.
-          Inside: a <TextField> with label "Name", value newName,
-          onChange that updates newName and clears nameError,
-          and error={nameError} */}
+      {/* Rename dialog (wireframe 33) */}
+      {renameOpen && (
+        <ConfirmDialog
+          title="Rename participant"
+          confirmLabel="Save"
+          onConfirm={saveRename}
+          onClose={closeRename}
+        >
+          <TextField
+            label="Name"
+            value={newName}
+            onChange={e => {
+              setNewName(e.target.value)
+              setNameError('')
+            }}
+            error={nameError}
+          />
+        </ConfirmDialog>
+      )}
     </Layout>
   )
 }
