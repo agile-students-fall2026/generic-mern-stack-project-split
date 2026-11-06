@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import Layout from '../components/Layout.jsx'
 import api from '../api.js'
+import JoinedEventsContext from '../JoinedEventsContext.js'
 
 import './JoinEvent.css'
 
@@ -12,6 +13,7 @@ function JoinEvent() {
 
   const [message, setMessage] = useState('')
   const { inviteCode } = useParams()
+  const { addJoin } = useContext(JoinedEventsContext)
 
   useEffect(() => {
     api.get('/invites.json').then(res => {
@@ -38,7 +40,11 @@ function JoinEvent() {
     if (name === '') {
       setMessage('Please enter your name.')
     } else {
-      api.get('/join-event.json').then(() => {
+      api.get('/join-event.json').then(res => {
+        // the mock reply is always Maya in Lisbon, so don't apply it to another event
+        if (res.data.eventId === invite.eventId) {
+          addJoin(res.data)
+        }
         setJoined({
           code: inviteCode,
           eventId: invite.eventId,

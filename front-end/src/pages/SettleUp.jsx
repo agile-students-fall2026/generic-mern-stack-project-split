@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../api.js'
+import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
@@ -24,6 +25,9 @@ function SettleUp() {
   const [error, setError] = useState('')
   const [transfers, setTransfers] = useState([])
   const [confirming, setConfirming] = useState(null)
+  const [markingPaid, setMarkingPaid] = useState(null)
+  const [announcement, setAnnouncement] = useState('')
+  const { joinedAs } = useContext(JoinedEventsContext)
 
   // load the event and the signed in user when the page opens
   useEffect(() => {
@@ -41,11 +45,13 @@ function SettleUp() {
       })
   }, [eventId])
 
-  // which participant in this event is the signed in user
+  // which participant in this event is me: the guest I joined as in this
+  // session, otherwise the signed in user
+  const joinedId = joinedAs[eventId]
   let me = null
   if (event && user) {
     for (const person of event.participants) {
-      if (person.userId === user.id) {
+      if (joinedId ? person.id === joinedId : person.userId === user.id) {
         me = person
       }
     }
@@ -95,19 +101,55 @@ function SettleUp() {
     return 'Not paid yet'
   }
 
-  // mark the payment in the dialog as settled (wireframe 28)
-  function confirmPayment() {
+  // the small button under the amount, only on payments waiting on me
+  function rowButton(transfer) {
+    if (transfer.status === 'pending' && me && transfer.toId === me.id) {
+      return (
+        <Button small onClick={() => setConfirming(transfer)}>
+          Confirm received
+        </Button>
+      )
+    }
+    if (transfer.status === 'unpaid' && me && transfer.fromId === me.id) {
+      return (
+        <Button small onClick={() => setMarkingPaid(transfer)}>
+          Mark paid
+        </Button>
+      )
+    }
+    return null
+  }
+
+  // change the status of one payment, keeping it the same row
+  function setStatus(target, status) {
     const updated = transfers.map(transfer => {
-      if (
-        transfer.fromId === confirming.fromId &&
-        transfer.toId === confirming.toId
-      ) {
-        return { ...transfer, status: 'confirmed' }
+      if (transfer.fromId === target.fromId && transfer.toId === target.toId) {
+        return { ...transfer, status: status }
       }
       return transfer
     })
     setTransfers(updated)
+  }
+
+  // mark the payment in the dialog as settled (wireframe 28)
+  function confirmPayment() {
+    setStatus(confirming, 'confirmed')
     setConfirming(null)
+  }
+
+  // I paid outside the app, now it waits for the other person (wireframe 26)
+  function markPaid() {
+    setStatus(markingPaid, 'pending')
+    setAnnouncement(
+      'Marked ' +
+        formatMoney(markingPaid.amountCents) +
+        ' to ' +
+        nameOf(markingPaid.toId) +
+        ' as paid. Waiting for ' +
+        nameOf(markingPaid.toId) +
+        ' to confirm.',
+    )
+    setMarkingPaid(null)
   }
 
   return (
@@ -141,23 +183,40 @@ function SettleUp() {
                 title={rowTitle(transfer)}
                 subtitle={rowSubtitle(transfer)}
                 right={
-                  transfer.status === 'pending' &&
-                  me &&
-                  transfer.toId === me.id ? (
-                    <div className="flex flex-col items-end gap-2">
-                      {formatMoney(transfer.amountCents)}
-                      <Button small onClick={() => setConfirming(transfer)}>
-                        Confirm received
-                      </Button>
-                    </div>
-                  ) : (
-                    formatMoney(transfer.amountCents)
-                  )
+                  <div className="flex flex-col items-end gap-2">
+                    {formatMoney(transfer.amountCents)}
+                    {rowButton(transfer)}
+                  </div>
                 }
               />
             ))}
           </ul>
+          <p role="status" className="sr-only">
+            {announcement}
+          </p>
         </>
+      )}
+
+      {markingPaid && (
+        <ConfirmDialog
+          title={
+            'Mark ' +
+            formatMoney(markingPaid.amountCents) +
+            ' to ' +
+            nameOf(markingPaid.toId) +
+            ' as paid?'
+          }
+          description={
+            'Only do this after you’ve paid ' +
+            nameOf(markingPaid.toId) +
+            ' outside the app. ' +
+            nameOf(markingPaid.toId) +
+            ' will be asked to confirm it.'
+          }
+          confirmLabel="Mark paid"
+          onConfirm={markPaid}
+          onClose={() => setMarkingPaid(null)}
+        />
       )}
 
       {confirming && (
