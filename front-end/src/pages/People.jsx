@@ -41,12 +41,75 @@ function getSubtitle(person, receipts) {
   return onAReceipt ? joined : joined + ' · no receipts'
 }
 
+// Keep monetary amounts intact: merging identities must not re-split receipts.
+function mergeParticipants(event, sourceId, targetId) {
+  const source = event.participants.find(person => person.id === sourceId)
+  const target = event.participants.find(person => person.id === targetId)
+  if (
+    !source ||
+    !target ||
+    sourceId === targetId ||
+    source.role === 'organizer'
+  ) {
+    return event
+  }
+  const resolveId = id => (id === sourceId ? targetId : id)
+  return {
+    ...event,
+    participants: event.participants.filter(person => person.id !== sourceId),
+    receipts: event.receipts.map(receipt => {
+      const shares = []
+      for (const share of receipt.shares) {
+        const participantId = resolveId(share.participantId)
+        const existing = shares.find(
+          item => item.participantId === participantId,
+        )
+        if (existing) {
+          existing.amountCents += share.amountCents
+          if (existing.percent != null && share.percent != null) {
+            existing.percent += share.percent
+          }
+        } else {
+          shares.push({ ...share, participantId })
+        }
+      }
+      return { ...receipt, payerId: resolveId(receipt.payerId), shares }
+    }),
+    balances: event.balances
+      .filter(balance => balance.participantId !== sourceId)
+      .map(balance => {
+        if (balance.participantId !== targetId) return balance
+        const sourceBalance = event.balances.find(
+          item => item.participantId === sourceId,
+        )
+        return {
+          ...balance,
+          paidCents: balance.paidCents + (sourceBalance?.paidCents ?? 0),
+          shareCents: balance.shareCents + (sourceBalance?.shareCents ?? 0),
+          netCents: balance.netCents + (sourceBalance?.netCents ?? 0),
+        }
+      }),
+    // Preserve individual records and their statuses, including internal transfers.
+    // A shared settlement service will need to distinguish history from new plans.
+    settlement: Object.fromEntries(
+      Object.entries(event.settlement).map(([plan, payments]) => [
+        plan,
+        payments.map(payment => ({
+          ...payment,
+          fromId: resolveId(payment.fromId),
+          toId: resolveId(payment.toId),
+        })),
+      ]),
+    ),
+  }
+}
+
 function People() {
   const { eventId } = useParams()
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
-  const [participants, setParticipants] = useState([])
+  const participants = event?.participants ?? []
   const [error, setError] = useState('')
 
   // the person whose Options menu is open (null means closed)
@@ -56,18 +119,27 @@ function People() {
   const [renameOpen, setRenameOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [nameError, setNameError] = useState('')
+  const [mergeOpen, setMergeOpen] = useState(false)
+  const [targetId, setTargetId] = useState('')
+  const [confirmMergeOpen, setConfirmMergeOpen] = useState(false)
+  const [notice, setNotice] = useState('')
+  const target = participants.find(person => person.id === targetId)
 
   // load the event when the page opens
   useEffect(() => {
+    let cancelled = false
     api
       .get(`/events/${encodeURIComponent(eventId)}.json`)
       .then(response => {
+        if (cancelled) return
         setEvent(response.data)
-        setParticipants(response.data.participants)
       })
       .catch(() => {
-        setError('Could not load this event.')
+        if (!cancelled) setError('Could not load this event.')
       })
+    return () => {
+      cancelled = true
+    }
   }, [eventId])
 
   function openRename() {
@@ -90,8 +162,22 @@ function People() {
     const updated = participants.map(person =>
       person.id === selected.id ? { ...person, name: newName.trim() } : person,
     )
-    setParticipants(updated)
+    setEvent({ ...event, participants: updated })
     closeRename()
+  }
+
+  function closeMerge() {
+    setMergeOpen(false)
+    setConfirmMergeOpen(false)
+    setTargetId('')
+    setSelected(null)
+  }
+
+  function saveMerge() {
+    if (!selected || !target) return
+    setEvent(current => mergeParticipants(current, selected.id, target.id))
+    setNotice(`${selected.name} merged into ${target.name}`)
+    closeMerge()
   }
 
   // the organizer is "you" for now, since only the organizer sees this page
@@ -99,21 +185,80 @@ function People() {
 
   return (
     <Layout
-      title={event ? event.name : 'People'}
-      subtitle={organizer ? 'You: ' + organizer.name : undefined}
-      left={<Link to="/">Back</Link>}
-      nav={<BottomNav eventId={eventId} />}
+      title={mergeOpen ? 'Merge' : event ? event.name : 'People'}
+      subtitle={!mergeOpen && organizer ? 'You: ' + organizer.name : undefined}
+      left={
+        mergeOpen ? (
+          <button onClick={closeMerge}>Cancel</button>
+        ) : (
+          <Link to="/">Back</Link>
+        )
+      }
+      nav={!mergeOpen && <BottomNav eventId={eventId} />}
     >
       <h1 tabIndex={-1} className="text-heading font-bold">
-        People
+        {mergeOpen ? `Merge ${selected.name} into…` : 'People'}
       </h1>
 
       {error && <p className="mt-2 font-semibold">{error}</p>}
 
       {!event && !error && <p className="mt-2 text-muted">Loading people…</p>}
 
-      {event && (
+      {mergeOpen && (
         <>
+          <p className="mt-2 text-body text-muted">
+            Pick the person {selected.name} really is. Their receipts and
+            payments will move to that person.
+          </p>
+          <fieldset className="mt-4">
+            <legend className="sr-only">Merge into</legend>
+            {participants
+              .filter(person => person.id !== selected.id)
+              .map(person => (
+                <label
+                  key={person.id}
+                  className="flex min-h-16 cursor-pointer items-center gap-3 border-b border-line py-3"
+                >
+                  <input
+                    type="radio"
+                    name="merge-target"
+                    value={person.id}
+                    checked={targetId === person.id}
+                    onChange={() => setTargetId(person.id)}
+                    className="h-5 w-5 accent-black"
+                  />
+                  <span>
+                    <span className="block font-semibold">{person.name}</span>
+                    {person.name.trim().split(/\s+/)[0].toLowerCase() ===
+                      selected.name.trim().split(/\s+/)[0].toLowerCase() && (
+                      <span className="block text-body text-muted">
+                        Same first name
+                      </span>
+                    )}
+                  </span>
+                </label>
+              ))}
+          </fieldset>
+          <Button
+            className="mt-4 w-full"
+            disabled={!target}
+            onClick={() => setConfirmMergeOpen(true)}
+          >
+            Continue
+          </Button>
+        </>
+      )}
+
+      {event && !mergeOpen && (
+        <>
+          {notice && (
+            <p
+              role="status"
+              className="mt-4 rounded-lg border border-line bg-surface p-3 font-semibold"
+            >
+              {notice}
+            </p>
+          )}
           <p className="mt-2 text-body text-muted">
             {participants.length}{' '}
             {participants.length === 1 ? 'person' : 'people'} in this event
@@ -129,7 +274,10 @@ function People() {
                     <Button
                       variant="outline"
                       small
-                      onClick={() => setSelected(person)}
+                      onClick={() => {
+                        setSelected(person)
+                        setNotice('')
+                      }}
                     >
                       Options
                     </Button>
@@ -142,7 +290,7 @@ function People() {
       )}
 
       {/* Options menu (wireframe 32) */}
-      {selected && !renameOpen && (
+      {selected && !renameOpen && !mergeOpen && (
         <Sheet
           title={selected.name}
           description={getSubtitle(selected, event.receipts)}
@@ -151,9 +299,26 @@ function People() {
           <Button variant="outline" onClick={openRename}>
             Rename
           </Button>
-          {/* Merge into is built in #53 */}
-          <Button variant="outline">Merge into…</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setTargetId('')
+              setMergeOpen(true)
+            }}
+          >
+            Merge into…
+          </Button>
         </Sheet>
+      )}
+
+      {confirmMergeOpen && target && (
+        <ConfirmDialog
+          title={`Merge ${selected.name} into ${target.name}?`}
+          description={`${selected.name} will be removed. Their receipts and payments move to ${target.name}. This can't be undone.`}
+          confirmLabel="Merge"
+          onConfirm={saveMerge}
+          onClose={() => setConfirmMergeOpen(false)}
+        />
       )}
 
       {/* Rename dialog (wireframe 33) */}
