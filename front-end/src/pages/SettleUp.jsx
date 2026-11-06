@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
-// import ListRow from '../components/ListRow.jsx'
+import ListRow from '../components/ListRow.jsx'
 
 // Turns 2100 (cents) into "$21.00"
 function formatMoney(cents) {
@@ -46,7 +46,7 @@ function SettleUp() {
     }
   }
 
-  // "you" for me, otherwise the person's name. Example: nameOf('p_sam') is "Sam"
+  // "you" for me, otherwise the person's name
   function nameOf(participantId) {
     if (me && participantId === me.id) {
       return 'you'
@@ -59,12 +59,32 @@ function SettleUp() {
     return 'Someone'
   }
 
+  // "You pay Alex", "Sam pays you", "Sam pays Jordan"
   function rowTitle(transfer) {
-    return 'TODO ' + nameOf(transfer.fromId)
+    const from = nameOf(transfer.fromId)
+    const to = nameOf(transfer.toId)
+    if (from === 'you') {
+      return 'You pay ' + to
+    }
+    return from + ' pays ' + to
   }
 
+  // the grey status line under each payment
   function rowSubtitle(transfer) {
-    return 'TODO ' + transfer.status
+    if (transfer.status === 'confirmed') {
+      return 'Settled'
+    }
+    if (transfer.status === 'pending') {
+      return 'Pending – waiting for ' + nameOf(transfer.toId)
+    }
+    // unpaid
+    if (me && transfer.fromId === me.id) {
+      return 'You owe this'
+    }
+    if (me && transfer.toId === me.id) {
+      return 'Waiting for ' + nameOf(transfer.fromId) + ' to pay'
+    }
+    return 'Not paid yet'
   }
 
   return (
@@ -86,18 +106,19 @@ function SettleUp() {
           <p className="mt-2 text-body text-muted">
             Pay each other outside the app, then mark it here.
           </p>
-
-          {/* TODO if event.settlement.all is empty, show
-              "No payments yet. Add receipts to see who owes whom." */}
-
-          {/* TODO 
-              Look at People.jsx for the same pattern. */}
-          <ul className="mt-4">
+          {event.settlement.all.length === 0 && (
+            <p className="mt-4 text-body text-muted">
+              No payments yet. Add receipts to see who owes whom.
+            </p>
+          )}
+          <ul className="mt-1">
             {event.settlement.all.map(transfer => (
-              <li key={transfer.fromId + '-' + transfer.toId}>
-                {rowTitle(transfer)} / {rowSubtitle(transfer)} /{' '}
-                {formatMoney(transfer.amountCents)}
-              </li>
+              <ListRow
+                key={transfer.fromId + '-' + transfer.toId}
+                title={rowTitle(transfer)}
+                subtitle={rowSubtitle(transfer)}
+                right={formatMoney(transfer.amountCents)}
+              />
             ))}
           </ul>
         </>
