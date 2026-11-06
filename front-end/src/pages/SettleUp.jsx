@@ -4,6 +4,8 @@ import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
+import Button from '../components/Button.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 
 // Turns 2100 (cents) into "$21.00"
 function formatMoney(cents) {
@@ -20,6 +22,8 @@ function SettleUp() {
   const [event, setEvent] = useState(null)
   const [user, setUser] = useState(null)
   const [error, setError] = useState('')
+  const [transfers, setTransfers] = useState([])
+  const [confirming, setConfirming] = useState(null)
 
   // load the event and the signed in user when the page opens
   useEffect(() => {
@@ -30,6 +34,7 @@ function SettleUp() {
       .then(([eventResponse, userResponse]) => {
         setEvent(eventResponse.data)
         setUser(userResponse.data)
+        setTransfers(eventResponse.data.settlement.all)
       })
       .catch(() => {
         setError('Could not load this event.')
@@ -74,6 +79,9 @@ function SettleUp() {
     if (transfer.status === 'confirmed') {
       return 'Settled'
     }
+    if (transfer.status === 'pending' && me && transfer.toId === me.id) {
+      return nameOf(transfer.fromId) + ' marked this paid'
+    }
     if (transfer.status === 'pending') {
       return 'Pending – waiting for ' + nameOf(transfer.toId)
     }
@@ -85,6 +93,21 @@ function SettleUp() {
       return 'Waiting for ' + nameOf(transfer.fromId) + ' to pay'
     }
     return 'Not paid yet'
+  }
+
+  // mark the payment in the dialog as settled (wireframe 28)
+  function confirmPayment() {
+    const updated = transfers.map(transfer => {
+      if (
+        transfer.fromId === confirming.fromId &&
+        transfer.toId === confirming.toId
+      ) {
+        return { ...transfer, status: 'confirmed' }
+      }
+      return transfer
+    })
+    setTransfers(updated)
+    setConfirming(null)
   }
 
   return (
@@ -106,22 +129,51 @@ function SettleUp() {
           <p className="mt-2 text-body text-muted">
             Pay each other outside the app, then mark it here.
           </p>
-          {event.settlement.all.length === 0 && (
+          {transfers.length === 0 && (
             <p className="mt-4 text-body text-muted">
               No payments yet. Add receipts to see who owes whom.
             </p>
           )}
           <ul className="mt-1">
-            {event.settlement.all.map(transfer => (
+            {transfers.map(transfer => (
               <ListRow
                 key={transfer.fromId + '-' + transfer.toId}
                 title={rowTitle(transfer)}
                 subtitle={rowSubtitle(transfer)}
-                right={formatMoney(transfer.amountCents)}
+                right={
+                  transfer.status === 'pending' &&
+                  me &&
+                  transfer.toId === me.id ? (
+                    <div className="flex flex-col items-end gap-2">
+                      {formatMoney(transfer.amountCents)}
+                      <Button small onClick={() => setConfirming(transfer)}>
+                        Confirm received
+                      </Button>
+                    </div>
+                  ) : (
+                    formatMoney(transfer.amountCents)
+                  )
+                }
               />
             ))}
           </ul>
         </>
+      )}
+
+      {confirming && (
+        <ConfirmDialog
+          title={
+            'Confirm ' +
+            formatMoney(confirming.amountCents) +
+            ' from ' +
+            nameOf(confirming.fromId) +
+            '?'
+          }
+          description="Confirm only once the money has arrived. This settles the payment for everyone."
+          confirmLabel="Confirm"
+          onConfirm={confirmPayment}
+          onClose={() => setConfirming(null)}
+        />
       )}
     </Layout>
   )
