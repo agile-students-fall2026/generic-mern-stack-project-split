@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
-// import ListRow from '../components/ListRow.jsx'
-// import SectionLabel from '../components/SectionLabel.jsx'
+import ListRow from '../components/ListRow.jsx'
+import SectionLabel from '../components/SectionLabel.jsx'
 
 // Turns 3600 (cents) into "$36.00"
 function formatMoney(cents) {
@@ -56,9 +56,15 @@ function ReceiptDetails() {
     }
   }
 
-  // TODO: find the receipt whose id matches receiptId
-  console.log('looking for receipt', receiptId)
-  let receipt = event ? event.receipts[0] : null
+  // find the receipt from the address, like /receipts/r_pingo
+  let receipt = null
+  if (event) {
+    for (const item of event.receipts) {
+      if (item.id === receiptId) {
+        receipt = item
+      }
+    }
+  }
 
   // the name of a participant, from their id
   function nameOf(participantId) {
@@ -94,20 +100,26 @@ function ReceiptDetails() {
             {formatMoney(receipt.totalCents)}
           </p>
 
-          {/* TODO: a <ul> with three <ListRow> */ }
+          <ul className="mt-1">
+            <ListRow title="Paid by" right={nameOf(receipt.payerId)} />
+            <ListRow title="Date" right={formatDate(receipt.date)} />
+            <ListRow
+              title="Split"
+              right={receipt.split === 'percent' ? 'Percentage' : 'Equal'}
+            />
+          </ul>
 
-          {/* TODO: <SectionLabel>Shares</SectionLabel>, then a <ul>
-              that maps over receipt.shares and draws one <ListRow> each. */}
-              
-          <ul className="mt-4">
-            <li>
-              {nameOf(receipt.payerId)} / {formatDate(receipt.date)} /{' '}
-              {receipt.split}
-            </li>
+          <SectionLabel>Shares</SectionLabel>
+          <ul>
             {receipt.shares.map(share => (
-              <li key={share.participantId}>
-                {nameOf(share.participantId)} / {formatMoney(share.amountCents)}
-              </li>
+              <ListRow
+                key={share.participantId}
+                title={nameOf(share.participantId)}
+                subtitle={
+                  share.percent !== null ? share.percent + '%' : undefined
+                }
+                right={formatMoney(share.amountCents)}
+              />
             ))}
           </ul>
         </>
