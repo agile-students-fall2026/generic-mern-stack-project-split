@@ -4,10 +4,9 @@ import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import InviteSheet from '../components/InviteSheet.jsx'
-// TODO:
-// import ListRow from '../components/ListRow.jsx'
-// import Button from '../components/Button.jsx'
-// import EmptyState from '../components/EmptyState.jsx'
+import ListRow from '../components/ListRow.jsx'
+import Button from '../components/Button.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 
 // Turns 3600 (cents) into "$36.00"
 function formatMoney(cents) {
@@ -73,8 +72,12 @@ function EventReceipts() {
     return 'Someone'
   }
  
-  // TODO: add up every receipt's totalCents into totalCents.
   let totalCents = 0
+  if (event) {
+    for (const receipt of event.receipts) {
+      totalCents = totalCents + receipt.totalCents
+    }
+  }
  
   return (
     <Layout
@@ -91,22 +94,47 @@ function EventReceipts() {
  
       {!event && !error && <p className="mt-2 text-muted">Loading receipts…</p>}
  
-      {/* TODO: no receipts yet (wireframe 12) */}
- 
-      {/* TODO: the receipt list (wireframes 20 and 30) */}
-      
-      {event && (
-        <ul className="mt-4">
-          {event.receipts.map(receipt => (
-            <li key={receipt.id}>
-              {receipt.merchant} / {nameOf(receipt.payerId)} /{' '}
-              {formatDate(receipt.date)} / {formatMoney(receipt.totalCents)}
-            </li>
-          ))}
-          <li>Total so far: {formatMoney(totalCents)}</li>
-        </ul>
+      {/* no receipts yet (wireframe 12) */}
+      {event && event.receipts.length === 0 && (
+        <EmptyState
+          title="No receipts yet"
+          description={'Add the first shared expense for ' + event.name + '.'}
+        >
+          <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
+        </EmptyState>
       )}
+      
  
+      {/* the receipt list (wireframes 20 and 30) */}
+      {event && event.receipts.length > 0 && (
+        <>
+          <p className="mt-2 text-body text-muted">
+            {event.receipts.length}{' '}
+            {event.receipts.length === 1 ? 'receipt' : 'receipts'} ·{' '}
+            {formatMoney(totalCents)} total
+          </p>
+          <Button to={`/events/${eventId}/receipts/new`} className="mt-4">
+            Add receipt
+          </Button>
+          <ul className="mt-1">
+            {event.receipts.map(receipt => (
+              <ListRow
+                key={receipt.id}
+                title={receipt.merchant}
+                subtitle={
+                  'Paid by ' +
+                  nameOf(receipt.payerId) +
+                  ' · ' +
+                  formatDate(receipt.date)
+                }
+                right={formatMoney(receipt.totalCents)}
+                to={`/events/${eventId}/receipts/${receipt.id}`}
+              />
+            ))}
+          </ul>
+        </>
+      )}
+
       {invite && (
         <InviteSheet
           eventName={invite.eventName}
