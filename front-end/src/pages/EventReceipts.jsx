@@ -15,7 +15,7 @@ function formatMoney(cents) {
     currency: 'USD',
   })
 }
- 
+
 // Turns "2026-10-13" into "Oct 13"
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
@@ -31,12 +31,12 @@ function EventReceipts() {
   const navigate = useNavigate()
   // set by Create event, so a new event opens with the invite sheet
   const invite = state?.invite
- 
+
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
   const [user, setUser] = useState(null)
   const [error, setError] = useState('')
- 
+
   // load the event and the signed in user when the page opens
   useEffect(() => {
     Promise.all([
@@ -51,7 +51,7 @@ function EventReceipts() {
         setError('Could not load this event.')
       })
   }, [eventId])
- 
+
   // which participant in this event is the signed in user
   let me = null
   if (event && user) {
@@ -61,7 +61,7 @@ function EventReceipts() {
       }
     }
   }
- 
+
   // the name of a participant, from their id
   function nameOf(participantId) {
     for (const person of event.participants) {
@@ -71,14 +71,14 @@ function EventReceipts() {
     }
     return 'Someone'
   }
- 
+
   let totalCents = 0
   if (event) {
     for (const receipt of event.receipts) {
       totalCents = totalCents + receipt.totalCents
     }
   }
- 
+
   return (
     <Layout
       title={event ? event.name : 'Receipts'}
@@ -89,11 +89,11 @@ function EventReceipts() {
       <h1 tabIndex={-1} className="text-heading font-bold">
         Receipts
       </h1>
- 
+
       {error && <p className="mt-2 font-semibold">{error}</p>}
- 
+
       {!event && !error && <p className="mt-2 text-muted">Loading receipts…</p>}
- 
+
       {/* no receipts yet (wireframe 12) */}
       {event && event.receipts.length === 0 && (
         <EmptyState
@@ -103,8 +103,7 @@ function EventReceipts() {
           <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
         </EmptyState>
       )}
-      
- 
+
       {/* the receipt list (wireframes 20 and 30) */}
       {event && event.receipts.length > 0 && (
         <>
@@ -146,5 +145,5 @@ function EventReceipts() {
     </Layout>
   )
 }
- 
+
 export default EventReceipts
