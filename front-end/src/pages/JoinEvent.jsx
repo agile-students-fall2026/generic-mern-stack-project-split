@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import Layout from '../components/Layout.jsx'
 import api from '../api.js'
@@ -11,9 +11,56 @@ function JoinEvent() {
   const [invites, setInvites] = useState(null)
   const [joined, setJoined] = useState(null)
 
+  const [request, setRequest] = useState(null)
+  const [reply, setReply] = useState(null)
+  const navigate = useNavigate()
+  const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const { inviteCode } = useParams()
-  const { addJoin } = useContext(JoinedEventsContext)
+  const busy = submitting && request && request.code === inviteCode
+  const { joinedAs, addJoin } = useContext(JoinedEventsContext)
+
+  useEffect(() => {
+    let ignore = false
+    if (!request || request.code !== inviteCode) return
+    api
+      .get('/join-event.json')
+      .then(res => {
+        if (ignore) return
+        if (res.data.eventId === request.eventId) {
+          setReply({ code: request.code, participant: res.data })
+        } else {
+          setJoined({
+            code: request.code,
+            eventId: request.eventId,
+            name: request.name,
+          })
+        }
+        setSubmitting(false)
+      })
+      .catch(() => {
+        if (!ignore) {
+          setMessage('Could not join this event. Please try again.')
+          setSubmitting(false)
+        }
+      })
+    return () => {
+      ignore = true
+    }
+  }, [request, inviteCode])
+
+  useEffect(() => {
+    if (reply && reply.code === inviteCode) {
+      const participant = reply.participant
+      if (joinedAs[participant.eventId] !== participant.id) {
+        addJoin(participant)
+      } else {
+        navigate(`/events/${encodeURIComponent(participant.eventId)}`, {
+          state: { personalLink: true },
+        })
+      }
+    }
+  }, [reply, inviteCode, joinedAs, addJoin, navigate])
 
   useEffect(() => {
     api.get('/invites.json').then(res => {
@@ -35,22 +82,15 @@ function JoinEvent() {
 
   function handleSubmit(event) {
     event.preventDefault()
-    const name = event.target.guestName.value
+    const name = event.target.guestName.value.trim()
+    if (busy) return
 
     if (name === '') {
       setMessage('Please enter your name.')
     } else {
-      api.get('/join-event.json').then(res => {
-        // the mock reply is always Maya in Lisbon, so don't apply it to another event
-        if (res.data.eventId === invite.eventId) {
-          addJoin(res.data)
-        }
-        setJoined({
-          code: inviteCode,
-          eventId: invite.eventId,
-          name: name,
-        })
-      })
+      setSubmitting(true)
+      setMessage('')
+      setRequest({ code: inviteCode, eventId: invite.eventId, name: name })
     }
   }
 
@@ -100,7 +140,12 @@ function JoinEvent() {
           <br />
           <input type="text" name="guestName" id="guestName" />
           <br />
-          <input className="join-submit" type="submit" value="Join event" />
+          <input
+            className="join-submit"
+            type="submit"
+            disabled={busy}
+            value={busy ? 'Joining...' : 'Join event'}
+          />
           <p className="join-error">{message}</p>
         </form>
         <p>Others in the event will see this name.</p>

@@ -7,6 +7,7 @@ import Register from './pages/Register.jsx'
 import MyEvents from './pages/MyEvents.jsx'
 import CreateEvent from './pages/CreateEvent.jsx'
 import JoinEvent from './pages/JoinEvent.jsx'
+import ReturnLink from './pages/ReturnLink.jsx'
 import EventReceipts from './pages/EventReceipts.jsx'
 import AddReceipt from './pages/AddReceipt.jsx'
 import ReceiptDetails from './pages/ReceiptDetails.jsx'
@@ -52,6 +53,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/events/new" element={<CreateEvent />} />
           <Route path="/join/:inviteCode" element={<JoinEvent />} />
+          <Route path="/r/:returnToken" element={<ReturnLink />} />
           <Route path="/events/:eventId" element={<EventReceipts />} />
           <Route
             path="/events/:eventId/receipts/new"

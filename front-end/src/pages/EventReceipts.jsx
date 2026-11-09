@@ -8,6 +8,8 @@ import InviteSheet from '../components/InviteSheet.jsx'
 import ListRow from '../components/ListRow.jsx'
 import Button from '../components/Button.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import PersonalLinkSheet from '../components/PersonalLinkSheet.jsx'
+import Sheet from '../components/Sheet.jsx'
 
 // Turns 3600 (cents) into "$36.00"
 function formatMoney(cents) {
@@ -28,26 +30,35 @@ function formatDate(date) {
 
 function EventReceipts() {
   const { eventId } = useParams()
-  const { pathname, state } = useLocation()
+  const { pathname, state, key } = useLocation()
   const navigate = useNavigate()
+  const { joinedAs } = useContext(JoinedEventsContext)
+
   // set by Create event, so a new event opens with the invite sheet
   const invite = state?.invite
+  // set by Join event, so a guest sees their return link right away (#45)
+  const personalLink = state?.personalLink
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
   const [user, setUser] = useState(null)
+  const [links, setLinks] = useState([])
   const [error, setError] = useState('')
-  const { joinedAs } = useContext(JoinedEventsContext)
 
-  // load the event and the signed in user when the page opens
+  // which sheet is open: 'menu', 'link', or null (#45)
+  const [sheet, setSheet] = useState(null)
+
+  // load the event, the signed in user, and the return links
   useEffect(() => {
     Promise.all([
       api.get(`/events/${encodeURIComponent(eventId)}.json`),
       api.get('/user.json'),
+      api.get('/return-links.json'),
     ])
-      .then(([eventResponse, userResponse]) => {
+      .then(([eventResponse, userResponse, linksResponse]) => {
         setEvent(eventResponse.data)
         setUser(userResponse.data)
+        setLinks(linksResponse.data)
       })
       .catch(() => {
         setError('Could not load this event.')
@@ -64,6 +75,28 @@ function EventReceipts() {
         me = person
       }
     }
+  }
+
+  // a guest's personal return link, so they can get back in later (#45)
+  let returnLink = null
+  if (joinedId) {
+    for (const link of links) {
+      if (link.eventId === eventId && link.participantId === joinedId) {
+        returnLink = link
+      }
+    }
+  }
+
+  // only show a sheet opened on this visit to the page
+  let openSheet = ''
+  if (sheet && sheet.key === key) {
+    openSheet = sheet.name
+  }
+
+  function closeSheet() {
+    setSheet(null)
+    // drop the join or invite state so reload and Back don't reopen a sheet
+    if (personalLink || invite) navigate(pathname, { replace: true })
   }
 
   // the name of a participant, from their id
@@ -89,6 +122,13 @@ function EventReceipts() {
       title={event ? event.name : 'Receipts'}
       subtitle={me ? 'You: ' + me.name : undefined}
       left={<Link to="/">Back</Link>}
+      right={
+        returnLink && (
+          <button type="button" onClick={() => setSheet({ key, name: 'menu' })}>
+            Menu
+          </button>
+        )
+      }
       nav={<BottomNav eventId={eventId} />}
     >
       <h1 tabIndex={-1} className="text-heading font-bold">
@@ -143,9 +183,28 @@ function EventReceipts() {
         <InviteSheet
           eventName={invite.eventName}
           inviteCode={invite.inviteCode}
-          // drop the state so Back or a reload doesn't reopen the sheet
-          onClose={() => navigate(pathname, { replace: true })}
+          onClose={closeSheet}
         />
+      )}
+      {!invite &&
+        returnLink &&
+        me &&
+        (personalLink || openSheet === 'link') && (
+          <PersonalLinkSheet
+            participantName={me.name}
+            returnToken={returnLink.token}
+            onClose={closeSheet}
+          />
+        )}
+      {!invite && !personalLink && openSheet === 'menu' && returnLink && (
+        <Sheet title={event.name} onClose={closeSheet}>
+          <Button
+            variant="outline"
+            onClick={() => setSheet({ key, name: 'link' })}
+          >
+            My return link
+          </Button>
+        </Sheet>
       )}
     </Layout>
   )
