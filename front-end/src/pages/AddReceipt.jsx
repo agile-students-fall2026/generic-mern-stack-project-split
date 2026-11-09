@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import EventClosureContext from '../EventClosureContext.js'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 
@@ -33,6 +34,9 @@ function money(cents) {
 function AddReceipt({ addReceipt }) {
   const { eventId } = useParams()
   const [event, setEvent] = useState(null)
+  const { closedEvents } = useContext(EventClosureContext)
+  const closure = closedEvents[eventId]
+  const isClosed = Boolean(closure) || event?.status === 'closed'
   const [error, setError] = useState(null)
   const [total, setTotal] = useState('')
   const [payerId, setPayerId] = useState('')
@@ -87,7 +91,12 @@ function AddReceipt({ addReceipt }) {
     e.preventDefault()
     if (saved) return
 
-    if (!event || event.id !== eventId || event.status !== 'active') {
+    if (
+      !event ||
+      event.id !== eventId ||
+      isClosed ||
+      event.status !== 'active'
+    ) {
       setMessage('This event is not available.')
       return
     }
@@ -145,7 +154,10 @@ function AddReceipt({ addReceipt }) {
       shares: shares,
     }
 
-    addReceipt(receipt)
+    if (addReceipt(receipt) === false) {
+      setMessage('This event is closed. New receipts cannot be added.')
+      return
+    }
     setMessage('')
     setSaved(receipt)
   }
@@ -155,7 +167,7 @@ function AddReceipt({ addReceipt }) {
     content = <p role="alert">{error.message}</p>
   } else if (!event || event.id !== eventId) {
     content = <p>Loading event...</p>
-  } else if (event.status !== 'active') {
+  } else if (isClosed || event.status !== 'active') {
     content = <p>This event is closed. New receipts cannot be added.</p>
   } else if (saved) {
     content = (

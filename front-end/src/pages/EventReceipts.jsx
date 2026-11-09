@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import EventClosureContext from '../EventClosureContext.js'
 import api from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
@@ -41,6 +42,9 @@ function EventReceipts() {
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
+  const { closedEvents } = useContext(EventClosureContext)
+  const closure = closedEvents[eventId]
+  const isClosed = Boolean(closure) || event?.status === 'closed'
   const [user, setUser] = useState(null)
   const [links, setLinks] = useState([])
   const [error, setError] = useState('')
@@ -131,10 +135,20 @@ function EventReceipts() {
       }
       nav={<BottomNav eventId={eventId} />}
     >
+      {isClosed && (
+        <span className="mb-3 inline-block rounded-full border-2 px-3 py-1 font-semibold">
+          Closed
+        </span>
+      )}
       <h1 tabIndex={-1} className="text-heading font-bold">
         Receipts
       </h1>
 
+      {isClosed && (
+        <p className="mt-2 text-body text-muted">
+          Closed {formatDate(closure?.closedAt ?? event.closedAt)} · read-only
+        </p>
+      )}
       {error && <p className="mt-2 font-semibold">{error}</p>}
 
       {!event && !error && <p className="mt-2 text-muted">Loading receipts…</p>}
@@ -143,9 +157,15 @@ function EventReceipts() {
       {event && event.receipts.length === 0 && (
         <EmptyState
           title="No receipts yet"
-          description={'Add the first shared expense for ' + event.name + '.'}
+          description={
+            isClosed
+              ? 'This closed event has no receipts.'
+              : 'Add the first shared expense for ' + event.name + '.'
+          }
         >
-          <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
+          {!isClosed && (
+            <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
+          )}
         </EmptyState>
       )}
 
@@ -157,9 +177,11 @@ function EventReceipts() {
             {event.receipts.length === 1 ? 'receipt' : 'receipts'} ·{' '}
             {formatMoney(totalCents)} total
           </p>
-          <Button to={`/events/${eventId}/receipts/new`} className="mt-4">
-            Add receipt
-          </Button>
+          {!isClosed && (
+            <Button to={`/events/${eventId}/receipts/new`} className="mt-4">
+              Add receipt
+            </Button>
+          )}
           <ul className="mt-1">
             {event.receipts.map(receipt => (
               <ListRow
@@ -179,7 +201,7 @@ function EventReceipts() {
         </>
       )}
 
-      {invite && (
+      {invite && !isClosed && (
         <InviteSheet
           eventName={invite.eventName}
           inviteCode={invite.inviteCode}

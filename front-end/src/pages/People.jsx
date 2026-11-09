@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import EventClosureContext from '../EventClosureContext.js'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -109,6 +110,9 @@ function People() {
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
+  const { closedEvents } = useContext(EventClosureContext)
+  const closure = closedEvents[eventId]
+  const isClosed = Boolean(closure) || event?.status === 'closed'
   const participants = event?.participants ?? []
   const [error, setError] = useState('')
 
@@ -154,6 +158,7 @@ function People() {
   }
 
   function saveRename() {
+    if (isClosed) return
     if (newName.trim() === '') {
       setNameError('Enter a name.')
       return
@@ -174,6 +179,7 @@ function People() {
   }
 
   function saveMerge() {
+    if (isClosed) return
     if (!selected || !target) return
     setEvent(current => mergeParticipants(current, selected.id, target.id))
     setNotice(`${selected.name} merged into ${target.name}`)
@@ -200,11 +206,14 @@ function People() {
         {mergeOpen ? `Merge ${selected.name} into…` : 'People'}
       </h1>
 
+      {isClosed && (
+        <p className="mt-2 text-body text-muted">Closed · read-only</p>
+      )}
       {error && <p className="mt-2 font-semibold">{error}</p>}
 
       {!event && !error && <p className="mt-2 text-muted">Loading people…</p>}
 
-      {mergeOpen && (
+      {!isClosed && mergeOpen && (
         <>
           <p className="mt-2 text-body text-muted">
             Pick the person {selected.name} really is. Their receipts and
@@ -270,6 +279,7 @@ function People() {
                 title={person.name}
                 subtitle={getSubtitle(person, event.receipts)}
                 right={
+                  !isClosed &&
                   person.role !== 'organizer' && (
                     <Button
                       variant="outline"
@@ -290,7 +300,7 @@ function People() {
       )}
 
       {/* Options menu (wireframe 32) */}
-      {selected && !renameOpen && !mergeOpen && (
+      {!isClosed && selected && !renameOpen && !mergeOpen && (
         <Sheet
           title={selected.name}
           description={getSubtitle(selected, event.receipts)}
@@ -311,7 +321,7 @@ function People() {
         </Sheet>
       )}
 
-      {confirmMergeOpen && target && (
+      {!isClosed && confirmMergeOpen && target && (
         <ConfirmDialog
           title={`Merge ${selected.name} into ${target.name}?`}
           description={`${selected.name} will be removed. Their receipts and payments move to ${target.name}. This can't be undone.`}
@@ -322,7 +332,7 @@ function People() {
       )}
 
       {/* Rename dialog (wireframe 33) */}
-      {renameOpen && (
+      {!isClosed && renameOpen && (
         <ConfirmDialog
           title="Rename participant"
           confirmLabel="Save"
