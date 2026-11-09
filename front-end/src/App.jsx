@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import EventClosureContext from './EventClosureContext.js'
 import CreatedEventsContext from './CreatedEventsContext.js'
 import JoinedEventsContext from './JoinedEventsContext.js'
 import SignIn from './pages/SignIn.jsx'
@@ -17,6 +18,7 @@ import People from './pages/People.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 function App() {
+  const [closedEvents, setClosedEvents] = useState({})
   const [createdEvents, setCreatedEvents] = useState([])
   const [joinedAs, setJoinedAs] = useState({})
   const [savedReceipts, setSavedReceipts] = useState([])
@@ -37,44 +39,59 @@ function App() {
     }))
   }
 
+  function closeEvent(eventId, transfers) {
+    setClosedEvents(events => ({
+      ...events,
+      [eventId]: events[eventId] ?? {
+        status: 'closed',
+        closedAt: new Date().toISOString(),
+        transfers: transfers.map(transfer => ({ ...transfer })),
+      },
+    }))
+  }
+
   function addReceipt(receipt) {
+    if (closedEvents[receipt.eventId]) return false
     setSavedReceipts(receipts => [
       ...receipts,
       { ...receipt, id: 'local_' + receipts.length },
     ])
+    return true
   }
 
   return (
-    <CreatedEventsContext value={{ createdEvents, addEvent }}>
-      <JoinedEventsContext value={{ joinedAs, addJoin }}>
-        <Routes>
-          <Route path="/" element={<MyEvents />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/events/new" element={<CreateEvent />} />
-          <Route path="/join/:inviteCode" element={<JoinEvent />} />
-          <Route path="/r/:returnToken" element={<ReturnLink />} />
-          <Route path="/events/:eventId" element={<EventReceipts />} />
-          <Route
-            path="/events/:eventId/receipts/new"
-            element={
-              <AddReceipt
-                savedReceipts={savedReceipts}
-                addReceipt={addReceipt}
-              />
-            }
-          />
-          <Route
-            path="/events/:eventId/receipts/:receiptId"
-            element={<ReceiptDetails />}
-          />
-          <Route path="/events/:eventId/balances" element={<Balances />} />
-          <Route path="/events/:eventId/settle-up" element={<SettleUp />} />
-          <Route path="/events/:eventId/people" element={<People />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </JoinedEventsContext>
-    </CreatedEventsContext>
+    <EventClosureContext value={{ closedEvents, closeEvent }}>
+      <CreatedEventsContext value={{ createdEvents, addEvent }}>
+        <JoinedEventsContext value={{ joinedAs, addJoin }}>
+          <Routes>
+            <Route path="/" element={<MyEvents />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/events/new" element={<CreateEvent />} />
+            <Route path="/join/:inviteCode" element={<JoinEvent />} />
+            <Route path="/r/:returnToken" element={<ReturnLink />} />
+            <Route path="/events/:eventId" element={<EventReceipts />} />
+            <Route
+              path="/events/:eventId/receipts/new"
+              element={
+                <AddReceipt
+                  savedReceipts={savedReceipts}
+                  addReceipt={addReceipt}
+                />
+              }
+            />
+            <Route
+              path="/events/:eventId/receipts/:receiptId"
+              element={<ReceiptDetails />}
+            />
+            <Route path="/events/:eventId/balances" element={<Balances />} />
+            <Route path="/events/:eventId/settle-up" element={<SettleUp />} />
+            <Route path="/events/:eventId/people" element={<People />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </JoinedEventsContext>
+      </CreatedEventsContext>
+    </EventClosureContext>
   )
 }
 

@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import EventClosureContext from '../EventClosureContext.js'
 import api from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
@@ -41,9 +42,15 @@ function EventReceipts() {
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
+  const { closedEvents } = useContext(EventClosureContext)
+  const closure = closedEvents[eventId]
+  const isClosed = Boolean(closure) || event?.status === 'closed'
   const [user, setUser] = useState(null)
   const [links, setLinks] = useState([])
   const [error, setError] = useState('')
+
+  // is the "Add receipt" menu open (wireframe 13, #49)
+  const [addOpen, setAddOpen] = useState(false)
 
   // which sheet is open: 'menu', 'link', or null (#45)
   const [sheet, setSheet] = useState(null)
@@ -99,6 +106,17 @@ function EventReceipts() {
     if (personalLink || invite) navigate(pathname, { replace: true })
   }
 
+  // a photo was picked: open the form with that photo (#49)
+  function photoPicked(changeEvent) {
+    const file = changeEvent.target.files[0]
+    if (!file) return
+    // a temporary address for the picked file, until the back-end can store it
+    const photoUrl = URL.createObjectURL(file)
+    navigate(`/events/${eventId}/receipts/new`, {
+      state: { photoUrl, photoName: file.name },
+    })
+  }
+
   // the name of a participant, from their id
   function nameOf(participantId) {
     for (const person of event.participants) {
@@ -131,10 +149,20 @@ function EventReceipts() {
       }
       nav={<BottomNav eventId={eventId} />}
     >
+      {isClosed && (
+        <span className="mb-3 inline-block rounded-full border-2 px-3 py-1 font-semibold">
+          Closed
+        </span>
+      )}
       <h1 tabIndex={-1} className="text-heading font-bold">
         Receipts
       </h1>
 
+      {isClosed && (
+        <p className="mt-2 text-body text-muted">
+          Closed {formatDate(closure?.closedAt ?? event.closedAt)} · read-only
+        </p>
+      )}
       {error && <p className="mt-2 font-semibold">{error}</p>}
 
       {!event && !error && <p className="mt-2 text-muted">Loading receipts…</p>}
@@ -143,9 +171,15 @@ function EventReceipts() {
       {event && event.receipts.length === 0 && (
         <EmptyState
           title="No receipts yet"
-          description={'Add the first shared expense for ' + event.name + '.'}
+          description={
+            isClosed
+              ? 'This closed event has no receipts.'
+              : 'Add the first shared expense for ' + event.name + '.'
+          }
         >
-          <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
+          {!isClosed && (
+            <Button onClick={() => setAddOpen(true)}>Add receipt</Button>
+          )}
         </EmptyState>
       )}
 
@@ -157,9 +191,11 @@ function EventReceipts() {
             {event.receipts.length === 1 ? 'receipt' : 'receipts'} ·{' '}
             {formatMoney(totalCents)} total
           </p>
-          <Button to={`/events/${eventId}/receipts/new`} className="mt-4">
-            Add receipt
-          </Button>
+          {!isClosed && (
+            <Button onClick={() => setAddOpen(true)} className="mt-4">
+              Add receipt
+            </Button>
+          )}
           <ul className="mt-1">
             {event.receipts.map(receipt => (
               <ListRow
@@ -179,7 +215,24 @@ function EventReceipts() {
         </>
       )}
 
-      {invite && (
+      {addOpen && (
+        <Sheet title="Add receipt" onClose={() => setAddOpen(false)}>
+          <Button variant="outline" to={`/events/${eventId}/receipts/new`}>
+            Enter manually
+          </Button>
+          <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-[10px] border-[1.5px] border-ink bg-white px-4 font-semibold text-ink">
+            Use a photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={photoPicked}
+              className="sr-only"
+            />
+          </label>
+        </Sheet>
+      )}
+
+      {invite && !isClosed && (
         <InviteSheet
           eventName={invite.eventName}
           inviteCode={invite.inviteCode}
