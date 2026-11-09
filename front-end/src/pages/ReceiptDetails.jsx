@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import api from '../api.js'
+import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
@@ -30,6 +31,7 @@ function ReceiptDetails() {
   const [event, setEvent] = useState(null)
   const [user, setUser] = useState(null)
   const [error, setError] = useState('')
+  const { joinedAs } = useContext(JoinedEventsContext)
 
   // load the event and the signed in user when the page opens
   useEffect(() => {
@@ -46,11 +48,13 @@ function ReceiptDetails() {
       })
   }, [eventId])
 
-  // which participant in this event is the signed in user
+  // which participant in this event is me: the guest I joined as in this
+  // session, otherwise the signed in user
+  const joinedId = joinedAs[eventId]
   let me = null
   if (event && user) {
     for (const person of event.participants) {
-      if (person.userId === user.id) {
+      if (joinedId ? person.id === joinedId : person.userId === user.id) {
         me = person
       }
     }
