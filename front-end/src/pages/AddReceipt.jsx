@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
@@ -33,6 +33,8 @@ function money(cents) {
 
 function AddReceipt({ addReceipt }) {
   const { eventId } = useParams()
+  // set by "Use a photo" on the receipt list (#49)
+  const photoUrl = useLocation().state?.photoUrl ?? null
   const [event, setEvent] = useState(null)
   const { closedEvents } = useContext(EventClosureContext)
   const closure = closedEvents[eventId]
@@ -150,7 +152,7 @@ function AddReceipt({ addReceipt }) {
       totalCents: totalCents,
       payerId: payerId,
       split: 'equal',
-      photoUrl: null,
+      photoUrl: photoUrl,
       shares: shares,
     }
 
@@ -194,6 +196,13 @@ function AddReceipt({ addReceipt }) {
     content = (
       <form className="space-y-5" onSubmit={handleSubmit}>
         <p>{event.name}</p>
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt="The receipt photo you picked"
+            className="max-h-64 w-full rounded-xl object-cover"
+          />
+        )}
         <label className="block">
           <span className="block font-semibold">Total (USD)</span>
           <input

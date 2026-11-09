@@ -126,6 +126,14 @@ function ReceiptDetails() {
               />
             ))}
           </ul>
+
+          {receipt.photoUrl && (
+            <img
+              src={receipt.photoUrl}
+              alt={'Receipt from ' + receipt.merchant}
+              className="mt-6 w-full rounded-xl"
+            />
+          )}
         </>
       )}
     </Layout>
