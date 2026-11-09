@@ -19,6 +19,7 @@ import NotFound from './pages/NotFound.jsx'
 function App() {
   const [createdEvents, setCreatedEvents] = useState([])
   const [joinedAs, setJoinedAs] = useState({})
+  const [savedReceipts, setSavedReceipts] = useState([])
 
   // the mock create reply always has the same id, so replace instead of duplicating
   function addEvent(event) {
@@ -36,6 +37,13 @@ function App() {
     }))
   }
 
+  function addReceipt(receipt) {
+    setSavedReceipts(receipts => [
+      ...receipts,
+      { ...receipt, id: 'local_' + receipts.length },
+    ])
+  }
+
   return (
     <CreatedEventsContext value={{ createdEvents, addEvent }}>
       <JoinedEventsContext value={{ joinedAs, addJoin }}>
@@ -49,7 +57,12 @@ function App() {
           <Route path="/events/:eventId" element={<EventReceipts />} />
           <Route
             path="/events/:eventId/receipts/new"
-            element={<AddReceipt />}
+            element={
+              <AddReceipt
+                savedReceipts={savedReceipts}
+                addReceipt={addReceipt}
+              />
+            }
           />
           <Route
             path="/events/:eventId/receipts/:receiptId"

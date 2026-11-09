@@ -27,6 +27,8 @@ function SettleUp() {
   const [confirming, setConfirming] = useState(null)
   const [markingPaid, setMarkingPaid] = useState(null)
   const [announcement, setAnnouncement] = useState('')
+  const [fewestTransfers, setFewestTransfers] = useState([])
+  const [showFewest, setShowFewest] = useState(false)
   const { joinedAs } = useContext(JoinedEventsContext)
 
   // load the event and the signed in user when the page opens
@@ -39,6 +41,7 @@ function SettleUp() {
         setEvent(eventResponse.data)
         setUser(userResponse.data)
         setTransfers(eventResponse.data.settlement.all)
+        setFewestTransfers(eventResponse.data.settlement.fewest)
       })
       .catch(() => {
         setError('Could not load this event.')
@@ -120,15 +123,22 @@ function SettleUp() {
     return null
   }
 
+  // the list on screen: all transfers, or the shorter fewest list (#55)
+  const shown = showFewest ? fewestTransfers : transfers
+
   // change the status of one payment, keeping it the same row
   function setStatus(target, status) {
-    const updated = transfers.map(transfer => {
+    const updated = shown.map(transfer => {
       if (transfer.fromId === target.fromId && transfer.toId === target.toId) {
         return { ...transfer, status: status }
       }
       return transfer
     })
-    setTransfers(updated)
+    if (showFewest) {
+      setFewestTransfers(updated)
+    } else {
+      setTransfers(updated)
+    }
   }
 
   // mark the payment in the dialog as settled (wireframe 28)
@@ -171,13 +181,22 @@ function SettleUp() {
           <p className="mt-2 text-body text-muted">
             Pay each other outside the app, then mark it here.
           </p>
-          {transfers.length === 0 && (
+          <label className="mt-4 flex items-center justify-between">
+            Fewest transfers
+            <input
+              type="checkbox"
+              checked={showFewest}
+              onChange={() => setShowFewest(!showFewest)}
+              className="size-6 accent-ink"
+            />
+          </label>
+          {shown.length === 0 && (
             <p className="mt-4 text-body text-muted">
               No payments yet. Add receipts to see who owes whom.
             </p>
           )}
           <ul className="mt-1">
-            {transfers.map(transfer => (
+            {shown.map(transfer => (
               <ListRow
                 key={transfer.fromId + '-' + transfer.toId}
                 title={rowTitle(transfer)}
