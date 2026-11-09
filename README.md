@@ -113,6 +113,7 @@ const loaded = result?.eventId === eventId
 - `evt_lisbon` starts with every payment `unpaid`. `evt_lisbon_settling` is the same trip later on, with Maya's payment to Alex `pending` and the rest `confirmed`. It is not in `events.json`, so open it by URL, for example `/events/evt_lisbon_settling/settle-up`.
 - Receipt photos are [Picsum](https://picsum.photos/) URLs stored in the JSON, such as `https://picsum.photos/seed/r_pingo/800/500`.
 - A missing mock file makes `api` reject the request, so handle it in `.catch`.
+- A picked receipt photo is "read" for about 1.5 seconds, then gets `scan-receipt.json`: a file whose name contains `blurry` (for example `blurry-receipt.jpg`) gets the `failed` result, and any other photo gets `read`.
 
 ### Shared components
 

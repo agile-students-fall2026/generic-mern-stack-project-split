@@ -112,7 +112,9 @@ function EventReceipts() {
     if (!file) return
     // a temporary address for the picked file, until the back-end can store it
     const photoUrl = URL.createObjectURL(file)
-    navigate(`/events/${eventId}/receipts/new`, { state: { photoUrl } })
+    navigate(`/events/${eventId}/receipts/new`, {
+      state: { photoUrl, photoName: file.name },
+    })
   }
 
   // the name of a participant, from their id
