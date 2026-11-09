@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import api from '../api.js'
 import Layout from '../components/Layout.jsx'
 
-function readCents(text) {
+function readCents(text, allowZero) {
   const parts = text.trim().split('.')
   if (parts.length > 2 || parts[0] === '') return null
 
@@ -20,7 +20,8 @@ function readCents(text) {
   if (decimals.length === 1) decimals = decimals + '0'
 
   const cents = Number(parts[0]) * 100 + Number(decimals)
-  if (!Number.isSafeInteger(cents) || cents <= 0) return null
+  if (!Number.isSafeInteger(cents)) return null
+  if (cents <= 0 && !allowZero) return null
   return cents
 }
 
@@ -40,6 +41,9 @@ function AddReceipt({ addReceipt }) {
   const [message, setMessage] = useState('')
   const [saved, setSaved] = useState(null)
 
+  const [split, setSplit] = useState('equal')
+  const [percentages, setPercentages] = useState([])
+
   useEffect(() => {
     api
       .get('/events/' + encodeURIComponent(eventId) + '.json')
@@ -51,9 +55,14 @@ function AddReceipt({ addReceipt }) {
         }
 
         const selected = []
+        const inputs = []
         for (const person of data.participants) {
           selected.push(person.id)
+          inputs.push({ id: person.id, value: '' })
         }
+        setPercentages(inputs)
+        setSplit('equal')
+
         setIncluded(selected)
         setTotal('')
         setPayerId('')
@@ -81,6 +90,25 @@ function AddReceipt({ addReceipt }) {
     }
     if (checked) selected.push(id)
     setIncluded(selected)
+  }
+
+  function getPercent(id) {
+    for (const item of percentages) {
+      if (item.id === id) return item.value
+    }
+    return ''
+  }
+
+  function changePercent(id, value) {
+    const updated = []
+    for (const item of percentages) {
+      if (item.id === id) {
+        updated.push({ id: id, value: value })
+      } else {
+        updated.push(item)
+      }
+    }
+    setPercentages(updated)
   }
 
   function handleSubmit(e) {
@@ -114,18 +142,63 @@ function AddReceipt({ addReceipt }) {
       return
     }
 
-    const each = Math.floor(totalCents / people.length)
-    const extra = totalCents % people.length
     const shares = []
 
-    for (let i = 0; i < people.length; i++) {
-      let amountCents = each
-      if (i < extra) amountCents = amountCents + 1
-      shares.push({
-        participantId: people[i].id,
-        amountCents: amountCents,
-        percent: null,
-      })
+    if (split === 'equal') {
+      const each = Math.floor(totalCents / people.length)
+      const extra = totalCents % people.length
+
+      for (let i = 0; i < people.length; i++) {
+        let amountCents = each
+        if (i < extra) amountCents = amountCents + 1
+        shares.push({
+          participantId: people[i].id,
+          amountCents: amountCents,
+          percent: null,
+        })
+      }
+    } else {
+      const units = []
+      let percentageTotal = 0
+
+      for (const person of people) {
+        const value = readCents(getPercent(person.id), true)
+        if (value === null || value > 10000) {
+          setMessage(
+            'Enter a percentage from 0 to 100 for each selected person.',
+          )
+          return
+        }
+        units.push(value)
+        percentageTotal = percentageTotal + value
+      }
+
+      if (percentageTotal !== 10000) {
+        setMessage('The selected percentages must add up to 100%.')
+        return
+      }
+
+      let assigned = 0
+      for (let i = 0; i < people.length; i++) {
+        const amountCents =
+          Math.floor(totalCents / 10000) * units[i] +
+          Math.floor(((totalCents % 10000) * units[i]) / 10000)
+
+        shares.push({
+          participantId: people[i].id,
+          amountCents: amountCents,
+          percent: units[i] / 100,
+        })
+        assigned = assigned + amountCents
+      }
+
+      let remaining = totalCents - assigned
+      for (let i = 0; i < shares.length; i++) {
+        if (remaining > 0 && units[i] > 0) {
+          shares[i].amountCents = shares[i].amountCents + 1
+          remaining = remaining - 1
+        }
+      }
     }
 
     const now = new Date()
@@ -140,7 +213,7 @@ function AddReceipt({ addReceipt }) {
       date: now.getFullYear() + '-' + month + '-' + day,
       totalCents: totalCents,
       payerId: payerId,
-      split: 'equal',
+      split: split,
       photoUrl: null,
       shares: shares,
     }
@@ -226,7 +299,42 @@ function AddReceipt({ addReceipt }) {
               <span>{person.name}</span>
             </label>
           ))}
+
+          <label className="block">
+            <span className="block font-semibold">split method</span>
+            <select
+              className="mt-2 min-h-12 w-full rounded-lg border p-3"
+              value={split}
+              onChange={e => {
+                setSplit(e.target.value)
+                setMessage('')
+              }}
+            >
+              <option value="equal">equl split</option>
+              <option value="percent">percentage split</option>
+            </select>
+          </label>
         </fieldset>
+        {split === 'percent' && (
+          <fieldset className="space-y-3">
+            <legend className="font-semibold">Percentages</legend>
+            <p>The total must be 100%.</p>
+            {event.participants.map(person =>
+              isIncluded(person.id) ? (
+                <label key={person.id} className="block">
+                  <span>{person.name} (%)</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="mt-2 min-h-12 w-full rounded-lg border p-3"
+                    value={getPercent(person.id)}
+                    onChange={e => changePercent(person.id, e.target.value)}
+                  />
+                </label>
+              ) : null,
+            )}
+          </fieldset>
+        )}
         {message && <p role="alert">{message}</p>}
         <button
           type="submit"
