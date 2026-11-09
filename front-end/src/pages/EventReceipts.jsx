@@ -49,6 +49,9 @@ function EventReceipts() {
   const [links, setLinks] = useState([])
   const [error, setError] = useState('')
 
+  // is the "Add receipt" menu open (wireframe 13, #49)
+  const [addOpen, setAddOpen] = useState(false)
+
   // which sheet is open: 'menu', 'link', or null (#45)
   const [sheet, setSheet] = useState(null)
 
@@ -101,6 +104,15 @@ function EventReceipts() {
     setSheet(null)
     // drop the join or invite state so reload and Back don't reopen a sheet
     if (personalLink || invite) navigate(pathname, { replace: true })
+  }
+
+  // a photo was picked: open the form with that photo (#49)
+  function photoPicked(changeEvent) {
+    const file = changeEvent.target.files[0]
+    if (!file) return
+    // a temporary address for the picked file, until the back-end can store it
+    const photoUrl = URL.createObjectURL(file)
+    navigate(`/events/${eventId}/receipts/new`, { state: { photoUrl } })
   }
 
   // the name of a participant, from their id
@@ -164,7 +176,7 @@ function EventReceipts() {
           }
         >
           {!isClosed && (
-            <Button to={`/events/${eventId}/receipts/new`}>Add receipt</Button>
+            <Button onClick={() => setAddOpen(true)}>Add receipt</Button>
           )}
         </EmptyState>
       )}
@@ -178,7 +190,7 @@ function EventReceipts() {
             {formatMoney(totalCents)} total
           </p>
           {!isClosed && (
-            <Button to={`/events/${eventId}/receipts/new`} className="mt-4">
+            <Button onClick={() => setAddOpen(true)} className="mt-4">
               Add receipt
             </Button>
           )}
@@ -199,6 +211,23 @@ function EventReceipts() {
             ))}
           </ul>
         </>
+      )}
+
+      {addOpen && (
+        <Sheet title="Add receipt" onClose={() => setAddOpen(false)}>
+          <Button variant="outline" to={`/events/${eventId}/receipts/new`}>
+            Enter manually
+          </Button>
+          <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-[10px] border-[1.5px] border-ink bg-white px-4 font-semibold text-ink">
+            Use a photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={photoPicked}
+              className="sr-only"
+            />
+          </label>
+        </Sheet>
       )}
 
       {invite && !isClosed && (
