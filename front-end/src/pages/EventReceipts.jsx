@@ -3,12 +3,25 @@ import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import InviteSheet from '../components/InviteSheet.jsx'
 
+import { useState } from 'react'
+
+import Button from '../components/Button.jsx'
+
+import PersonalLinkSheet from '../components/PersonalLinkSheet.jsx'
+import Sheet from '../components/Sheet.jsx'
+
 function EventReceipts() {
   const { eventId } = useParams()
   const { pathname, state } = useLocation()
   const navigate = useNavigate()
   // set by Create event, so a new event opens with the invite sheet
   const invite = state?.invite
+
+  const [openSheet, setOpenSheet] = useState('')
+
+  function openMenu() {
+    setOpenSheet('menu')
+  }
 
   return (
     <Layout title="Receipts" nav={<BottomNav eventId={eventId} />}>
