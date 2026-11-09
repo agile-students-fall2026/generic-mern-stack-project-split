@@ -1,5 +1,8 @@
 import { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import EventClosureContext from '../EventClosureContext.js'
+import Sheet from '../components/Sheet.jsx'
+import InviteSheet from '../components/InviteSheet.jsx'
 import api from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
@@ -18,6 +21,10 @@ function formatMoney(cents) {
 
 function SettleUp() {
   const { eventId } = useParams()
+  const navigate = useNavigate()
+  const { closedEvents, closeEvent } = useContext(EventClosureContext)
+  const closure = closedEvents[eventId]
+  const [sheet, setSheet] = useState(null)
 
   // data loaded from the mock files
   const [event, setEvent] = useState(null)
@@ -58,6 +65,29 @@ function SettleUp() {
         me = person
       }
     }
+  }
+
+  const isClosed = Boolean(closure) || event?.status === 'closed'
+  const allTransfers = closure?.transfers ?? transfers
+  const outstanding = allTransfers.filter(
+    transfer => transfer.amountCents > 0 && transfer.status !== 'confirmed',
+  ).length
+  const isOrganizer = me?.role === 'organizer'
+  const canClose = Boolean(
+    event &&
+    event.id === eventId &&
+    !error &&
+    event.status === 'active' &&
+    isOrganizer &&
+    !isClosed &&
+    outstanding === 0,
+  )
+
+  function confirmClose() {
+    if (!canClose) return
+    closeEvent(eventId, allTransfers)
+    setSheet(null)
+    navigate(`/events/${encodeURIComponent(eventId)}`)
   }
 
   // "you" for me, otherwise the person's name
@@ -106,6 +136,7 @@ function SettleUp() {
 
   // the small button under the amount, only on payments waiting on me
   function rowButton(transfer) {
+    if (isClosed) return null
     if (transfer.status === 'pending' && me && transfer.toId === me.id) {
       return (
         <Button small onClick={() => setConfirming(transfer)}>
@@ -124,10 +155,11 @@ function SettleUp() {
   }
 
   // the list on screen: all transfers, or the shorter fewest list (#55)
-  const shown = showFewest ? fewestTransfers : transfers
+  const shown = !isClosed && showFewest ? fewestTransfers : allTransfers
 
   // change the status of one payment, keeping it the same row
   function setStatus(target, status) {
+    if (isClosed) return
     const updated = shown.map(transfer => {
       if (transfer.fromId === target.fromId && transfer.toId === target.toId) {
         return { ...transfer, status: status }
@@ -143,12 +175,14 @@ function SettleUp() {
 
   // mark the payment in the dialog as settled (wireframe 28)
   function confirmPayment() {
+    if (isClosed) return
     setStatus(confirming, 'confirmed')
     setConfirming(null)
   }
 
   // I paid outside the app, now it waits for the other person (wireframe 26)
   function markPaid() {
+    if (isClosed) return
     setStatus(markingPaid, 'pending')
     setAnnouncement(
       'Marked ' +
@@ -166,6 +200,16 @@ function SettleUp() {
     <Layout
       title={event ? event.name : 'Settle up'}
       subtitle={me ? 'You: ' + me.name : undefined}
+      left={<Link to="/">Back</Link>}
+      right={
+        isOrganizer &&
+        !isClosed &&
+        event?.id === eventId && (
+          <button type="button" onClick={() => setSheet('menu')}>
+            Menu
+          </button>
+        )
+      }
       nav={<BottomNav eventId={eventId} />}
     >
       <h1 tabIndex={-1} className="text-heading font-bold">
@@ -179,17 +223,38 @@ function SettleUp() {
       {event && (
         <>
           <p className="mt-2 text-body text-muted">
-            Pay each other outside the app, then mark it here.
+            {isClosed
+              ? 'Closed · read-only'
+              : 'Pay each other outside the app, then mark it here.'}
           </p>
-          <label className="mt-4 flex items-center justify-between">
-            Fewest transfers
-            <input
-              type="checkbox"
-              checked={showFewest}
-              onChange={() => setShowFewest(!showFewest)}
-              className="size-6 accent-ink"
-            />
-          </label>
+          {!isClosed && (
+            <div
+              role="status"
+              className="mt-4 rounded-lg border border-line bg-surface p-3"
+            >
+              {outstanding > 0 ? (
+                `${outstanding} ${outstanding === 1 ? 'payment' : 'payments'} still unpaid or pending`
+              ) : (
+                <>
+                  <p className="font-semibold">All payments settled</p>
+                  <p className="text-muted">
+                    No further payments are required.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+          {!isClosed && (
+            <label className="mt-4 flex items-center justify-between">
+              Fewest transfers
+              <input
+                type="checkbox"
+                checked={showFewest}
+                onChange={() => setShowFewest(!showFewest)}
+                className="size-6 accent-ink"
+              />
+            </label>
+          )}
           {shown.length === 0 && (
             <p className="mt-4 text-body text-muted">
               No payments yet. Add receipts to see who owes whom.
@@ -216,7 +281,44 @@ function SettleUp() {
         </>
       )}
 
-      {markingPaid && (
+      {sheet === 'menu' && isOrganizer && !isClosed && (
+        <Sheet title={event.name} onClose={() => setSheet(null)}>
+          <Button variant="outline" onClick={() => setSheet('invite')}>
+            Invite link
+          </Button>
+          <Button
+            disabled={!canClose}
+            className="disabled:bg-gray-200 disabled:text-gray-500"
+            onClick={() => setSheet('close')}
+          >
+            Close event
+          </Button>
+          {outstanding > 0 && (
+            <p className="text-center text-body text-muted">
+              {outstanding} {outstanding === 1 ? 'payment' : 'payments'} still
+              unpaid or pending
+            </p>
+          )}
+        </Sheet>
+      )}
+      {sheet === 'invite' && !isClosed && (
+        <InviteSheet
+          eventName={event.name}
+          inviteCode={event.inviteCode}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet === 'close' && !isClosed && (
+        <ConfirmDialog
+          title={`Close ${event.name}?`}
+          description="Closed events are read-only. No one can add receipts or change payments."
+          confirmLabel="Close event"
+          onConfirm={confirmClose}
+          onClose={() => setSheet(null)}
+        />
+      )}
+
+      {!isClosed && markingPaid && (
         <ConfirmDialog
           title={
             'Mark ' +
@@ -238,7 +340,7 @@ function SettleUp() {
         />
       )}
 
-      {confirming && (
+      {!isClosed && confirming && (
         <ConfirmDialog
           title={
             'Confirm ' +
