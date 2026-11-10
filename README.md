@@ -169,7 +169,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`.
+Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`, then restart `npm run dev`.
 
 ### Other commands
 
