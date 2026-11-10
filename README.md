@@ -182,7 +182,7 @@ Run these from the `back-end` folder.
 
 ### Mock data
 
-Routes reply with the mock JSON in `back-end/mock/`, which has the same files as the front-end's [mock data](#mock-data). It also has one past event, `evt_cabin` (closed, every payment confirmed), listed in `events.json`. Import a file with the JSON import attribute:
+Mock JSON for back-end routes lives in `back-end/mock/`, which has the same files as the front-end's [mock data](#mock-data). It also has one past event, `evt_cabin` (closed, every payment confirmed), listed in `events.json`. Import a file with the JSON import attribute:
 
 ```js
 import events from './mock/events.json' with { type: 'json' }
