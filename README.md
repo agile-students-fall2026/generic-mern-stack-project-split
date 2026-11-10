@@ -38,6 +38,7 @@ Split began as a team project for NYU's Agile Development and DevOps course in F
 - Front-end: [React](https://react.dev/) 19 in plain JavaScript (JSX), built with [Vite](https://vite.dev/)
 - Routing: [React Router](https://reactrouter.com/) (`react-router-dom`) in declarative mode
 - Styling: [Tailwind CSS](https://tailwindcss.com/) v4
+- Back-end: [Express](https://expressjs.com/) 5 on Node.js, tested with [Mocha](https://mochajs.org/), [Chai](https://www.chaijs.com/) with [chai-http](https://www.npmjs.com/package/chai-http), and [c8](https://www.npmjs.com/package/c8) for coverage
 - Linting and formatting: [ESLint](https://eslint.org/) and [Prettier](https://prettier.io/)
 
 ## Running the Front-End
@@ -152,6 +153,32 @@ Render `Sheet` and `ConfirmDialog` only while they are open, and close them from
 ### Code style
 
 We use [ESLint](https://eslint.org/) for linting and [Prettier](https://prettier.io/) for formatting. The Prettier settings are in `.prettierrc` at the repo root. Open the repo root in VS Code and install the recommended extensions (ESLint and Prettier) when prompted. The shared settings in `.vscode/settings.json` then format each file when you save it. To lint or format the whole front-end at once, run `npm run lint` or `npm run format` from the `front-end` folder.
+
+## Running the Back-End
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20.19+, 22.13+, or 24+ (includes npm)
+
+### Install and run
+
+```bash
+cd back-end
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`.
+
+### Other commands
+
+Run these from the `back-end` folder.
+
+- `npm start` runs the server without restarting on changes.
+- `npm test` runs the tests in `back-end/test` with Mocha.
+- `npm run coverage` runs the tests and prints a c8 coverage table for every back-end file.
+- `npx c8 --all mocha test/<file>.test.js` shows the coverage of only your own test file.
 
 ## Contributing
 
