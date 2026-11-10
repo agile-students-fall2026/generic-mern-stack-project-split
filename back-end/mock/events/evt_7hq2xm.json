@@ -1,0 +1,32 @@
+{
+  "id": "evt_7hq2xm",
+  "name": "Porto weekend",
+  "status": "active",
+  "organizerId": "u_alex",
+  "startDate": null,
+  "endDate": null,
+  "closedAt": null,
+  "inviteCode": "por-4F7P",
+  "participants": [
+    {
+      "id": "p_porto_alex",
+      "name": "Alex",
+      "userId": "u_alex",
+      "role": "organizer",
+      "joinedAt": "2026-10-15"
+    }
+  ],
+  "receipts": [],
+  "balances": [
+    {
+      "participantId": "p_porto_alex",
+      "paidCents": 0,
+      "shareCents": 0,
+      "netCents": 0
+    }
+  ],
+  "settlement": {
+    "all": [],
+    "fewest": []
+  }
+}
