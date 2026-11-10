@@ -1,0 +1,261 @@
+{
+  "id": "evt_lisbon_settling",
+  "name": "Lisbon trip",
+  "status": "active",
+  "organizerId": "u_alex",
+  "startDate": "2026-10-10",
+  "endDate": "2026-10-14",
+  "closedAt": null,
+  "inviteCode": "lis-9K2D",
+  "participants": [
+    {
+      "id": "p_alex",
+      "name": "Alex",
+      "userId": "u_alex",
+      "role": "organizer",
+      "joinedAt": "2026-10-10"
+    },
+    {
+      "id": "p_maya",
+      "name": "Maya",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-10-10"
+    },
+    {
+      "id": "p_sam",
+      "name": "Sam",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-10-10"
+    },
+    {
+      "id": "p_jordan",
+      "name": "Jordan",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-10-10"
+    },
+    {
+      "id": "p_sam_k",
+      "name": "Sam K.",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-10-14"
+    }
+  ],
+  "receipts": [
+    {
+      "id": "r_timeout",
+      "merchant": "Time Out Market",
+      "totalCents": 12000,
+      "date": "2026-10-10",
+      "payerId": "p_alex",
+      "split": "equal",
+      "photoUrl": null,
+      "shares": [
+        {
+          "participantId": "p_alex",
+          "amountCents": 3000,
+          "percent": null
+        },
+        {
+          "participantId": "p_maya",
+          "amountCents": 3000,
+          "percent": null
+        },
+        {
+          "participantId": "p_sam",
+          "amountCents": 3000,
+          "percent": null
+        },
+        {
+          "participantId": "p_jordan",
+          "amountCents": 3000,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "id": "r_uber",
+      "merchant": "Uber to Sintra",
+      "totalCents": 6300,
+      "date": "2026-10-11",
+      "payerId": "p_maya",
+      "split": "equal",
+      "photoUrl": null,
+      "shares": [
+        {
+          "participantId": "p_maya",
+          "amountCents": 2100,
+          "percent": null
+        },
+        {
+          "participantId": "p_sam",
+          "amountCents": 2100,
+          "percent": null
+        },
+        {
+          "participantId": "p_jordan",
+          "amountCents": 2100,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "id": "r_ba",
+      "merchant": "BA Wine Bar",
+      "totalCents": 10000,
+      "date": "2026-10-12",
+      "payerId": "p_jordan",
+      "split": "percent",
+      "photoUrl": null,
+      "shares": [
+        {
+          "participantId": "p_maya",
+          "amountCents": 3000,
+          "percent": 30
+        },
+        {
+          "participantId": "p_sam",
+          "amountCents": 3000,
+          "percent": 30
+        },
+        {
+          "participantId": "p_jordan",
+          "amountCents": 4000,
+          "percent": 40
+        }
+      ]
+    },
+    {
+      "id": "r_pingo",
+      "merchant": "Pingo Doce",
+      "totalCents": 3600,
+      "date": "2026-10-13",
+      "payerId": "p_maya",
+      "split": "equal",
+      "photoUrl": "https://picsum.photos/seed/r_pingo/800/500",
+      "shares": [
+        {
+          "participantId": "p_alex",
+          "amountCents": 900,
+          "percent": null
+        },
+        {
+          "participantId": "p_maya",
+          "amountCents": 900,
+          "percent": null
+        },
+        {
+          "participantId": "p_sam",
+          "amountCents": 900,
+          "percent": null
+        },
+        {
+          "participantId": "p_jordan",
+          "amountCents": 900,
+          "percent": null
+        }
+      ]
+    }
+  ],
+  "balances": [
+    {
+      "participantId": "p_alex",
+      "paidCents": 12000,
+      "shareCents": 3900,
+      "netCents": 8100
+    },
+    {
+      "participantId": "p_maya",
+      "paidCents": 9900,
+      "shareCents": 9000,
+      "netCents": 900
+    },
+    {
+      "participantId": "p_sam",
+      "paidCents": 0,
+      "shareCents": 9000,
+      "netCents": -9000
+    },
+    {
+      "participantId": "p_jordan",
+      "paidCents": 10000,
+      "shareCents": 10000,
+      "netCents": 0
+    },
+    {
+      "participantId": "p_sam_k",
+      "paidCents": 0,
+      "shareCents": 0,
+      "netCents": 0
+    }
+  ],
+  "settlement": {
+    "all": [
+      {
+        "fromId": "p_maya",
+        "toId": "p_alex",
+        "amountCents": 2100,
+        "status": "pending"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_maya",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_alex",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_jordan",
+        "toId": "p_alex",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_jordan",
+        "amountCents": 3000,
+        "status": "confirmed"
+      }
+    ],
+    "fewest": [
+      {
+        "fromId": "p_maya",
+        "toId": "p_alex",
+        "amountCents": 2100,
+        "status": "pending"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_maya",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_alex",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_jordan",
+        "toId": "p_alex",
+        "amountCents": 3000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_sam",
+        "toId": "p_jordan",
+        "amountCents": 3000,
+        "status": "confirmed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "evt_lisbon",
+    "name": "Lisbon trip",
+    "status": "active",
+    "startDate": "2026-10-10",
+    "endDate": "2026-10-14",
+    "closedAt": null,
+    "participantCount": 5,
+    "totalCents": 31900
+  },
+  {
+    "id": "evt_cabin",
+    "name": "Hudson Valley cabin",
+    "status": "closed",
+    "startDate": "2026-09-18",
+    "endDate": "2026-09-20",
+    "closedAt": "2026-09-22T12:00:00.000Z",
+    "participantCount": 4,
+    "totalCents": 69000
+  }
+]

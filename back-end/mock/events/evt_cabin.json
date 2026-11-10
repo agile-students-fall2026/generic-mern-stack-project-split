@@ -1,0 +1,204 @@
+{
+  "id": "evt_cabin",
+  "name": "Hudson Valley cabin",
+  "status": "closed",
+  "organizerId": "u_alex",
+  "startDate": "2026-09-18",
+  "endDate": "2026-09-20",
+  "closedAt": "2026-09-22T12:00:00.000Z",
+  "inviteCode": "hud-6V3N",
+  "participants": [
+    {
+      "id": "p_cabin_alex",
+      "name": "Alex",
+      "userId": "u_alex",
+      "role": "organizer",
+      "joinedAt": "2026-09-18"
+    },
+    {
+      "id": "p_cabin_priya",
+      "name": "Priya",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-09-18"
+    },
+    {
+      "id": "p_cabin_leo",
+      "name": "Leo",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-09-18"
+    },
+    {
+      "id": "p_cabin_nina",
+      "name": "Nina",
+      "userId": null,
+      "role": "member",
+      "joinedAt": "2026-09-19"
+    }
+  ],
+  "receipts": [
+    {
+      "id": "r_cabin_rental",
+      "merchant": "Cabin rental",
+      "totalCents": 48000,
+      "date": "2026-09-18",
+      "payerId": "p_cabin_alex",
+      "split": "equal",
+      "photoUrl": "https://picsum.photos/seed/r_cabin_rental/800/500",
+      "shares": [
+        {
+          "participantId": "p_cabin_alex",
+          "amountCents": 12000,
+          "percent": null
+        },
+        {
+          "participantId": "p_cabin_priya",
+          "amountCents": 12000,
+          "percent": null
+        },
+        {
+          "participantId": "p_cabin_leo",
+          "amountCents": 12000,
+          "percent": null
+        },
+        {
+          "participantId": "p_cabin_nina",
+          "amountCents": 12000,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "id": "r_cabin_groceries",
+      "merchant": "Adams Fairacre Farms",
+      "totalCents": 9000,
+      "date": "2026-09-18",
+      "payerId": "p_cabin_priya",
+      "split": "equal",
+      "photoUrl": null,
+      "shares": [
+        {
+          "participantId": "p_cabin_alex",
+          "amountCents": 3000,
+          "percent": null
+        },
+        {
+          "participantId": "p_cabin_priya",
+          "amountCents": 3000,
+          "percent": null
+        },
+        {
+          "participantId": "p_cabin_leo",
+          "amountCents": 3000,
+          "percent": null
+        }
+      ]
+    },
+    {
+      "id": "r_cabin_dinner",
+      "merchant": "Hudson Valley Brewery",
+      "totalCents": 12000,
+      "date": "2026-09-19",
+      "payerId": "p_cabin_leo",
+      "split": "percent",
+      "photoUrl": null,
+      "shares": [
+        {
+          "participantId": "p_cabin_alex",
+          "amountCents": 3000,
+          "percent": 25
+        },
+        {
+          "participantId": "p_cabin_priya",
+          "amountCents": 3000,
+          "percent": 25
+        },
+        {
+          "participantId": "p_cabin_leo",
+          "amountCents": 2400,
+          "percent": 20
+        },
+        {
+          "participantId": "p_cabin_nina",
+          "amountCents": 3600,
+          "percent": 30
+        }
+      ]
+    }
+  ],
+  "balances": [
+    {
+      "participantId": "p_cabin_alex",
+      "paidCents": 48000,
+      "shareCents": 18000,
+      "netCents": 30000
+    },
+    {
+      "participantId": "p_cabin_priya",
+      "paidCents": 9000,
+      "shareCents": 18000,
+      "netCents": -9000
+    },
+    {
+      "participantId": "p_cabin_leo",
+      "paidCents": 12000,
+      "shareCents": 17400,
+      "netCents": -5400
+    },
+    {
+      "participantId": "p_cabin_nina",
+      "paidCents": 0,
+      "shareCents": 15600,
+      "netCents": -15600
+    }
+  ],
+  "settlement": {
+    "all": [
+      {
+        "fromId": "p_cabin_priya",
+        "toId": "p_cabin_alex",
+        "amountCents": 9000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_cabin_leo",
+        "toId": "p_cabin_alex",
+        "amountCents": 9000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_cabin_nina",
+        "toId": "p_cabin_alex",
+        "amountCents": 12000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_cabin_nina",
+        "toId": "p_cabin_leo",
+        "amountCents": 3600,
+        "status": "confirmed"
+      }
+    ],
+    "fewest": [
+      {
+        "fromId": "p_cabin_nina",
+        "toId": "p_cabin_alex",
+        "amountCents": 15600,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_cabin_priya",
+        "toId": "p_cabin_alex",
+        "amountCents": 9000,
+        "status": "confirmed"
+      },
+      {
+        "fromId": "p_cabin_leo",
+        "toId": "p_cabin_alex",
+        "amountCents": 5400,
+        "status": "confirmed"
+      }
+    ]
+  }
+}
