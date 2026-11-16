@@ -52,10 +52,11 @@ Split began as a team project for NYU's Agile Development and DevOps course in F
 ```bash
 cd front-end
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Then open http://localhost:5173 in your browser.
+Then open http://localhost:5173 in your browser. Screens that load from the back-end also need it running, so [start the back-end](#running-the-back-end) in a second terminal. `VITE_BACKEND` in `front-end/.env` is the back-end's address.
 
 ### Other commands
 
@@ -67,9 +68,21 @@ Run these from the `front-end` folder.
 - `npm run format` formats the code with Prettier.
 - `npm run format:check` checks the formatting without changing any files.
 
+### Back-end requests
+
+A screen calls the Express server with the `backend` axios instance in `src/api.js`, using the route's full path:
+
+```jsx
+import { backend } from '../api.js'
+
+backend.get('/api/events')
+```
+
+Screens move to the back-end one at a time. Until a screen has moved, it keeps reading the mock data below.
+
 ### Mock data
 
-Until the back-end exists, screens read mock JSON from `front-end/public/mock/`, which Vite serves at `/mock`. Never hard-code events, people, receipts, amounts, balances, invite codes, or user info in a component. Load them with the shared axios instance in `src/api.js` inside `useEffect`:
+Screens that have not moved to the back-end yet read mock JSON from `front-end/public/mock/`, which Vite serves at `/mock`. Never hard-code events, people, receipts, amounts, balances, invite codes, or user info in a component. Load them with the shared axios instance in `src/api.js` inside `useEffect`:
 
 ```jsx
 import api from '../api.js'
@@ -170,6 +183,8 @@ npm run dev
 ```
 
 Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`, then restart `npm run dev`.
+
+The server only accepts browser requests from the address in `FRONT_END_DOMAIN`. If the front-end starts on a port other than 5173, set that address in `back-end/.env` and restart.
 
 ### Other commands
 
