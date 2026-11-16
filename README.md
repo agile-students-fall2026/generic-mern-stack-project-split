@@ -182,9 +182,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`, then restart `npm run dev`.
+Then open http://localhost:3000/api in your browser. To use another port, change `PORT` in `back-end/.env`, then restart `npm run dev`, and set `VITE_BACKEND` in `front-end/.env` to the new address.
 
-The server only accepts browser requests from the address in `FRONT_END_DOMAIN`. If the front-end starts on a port other than 5173, set that address in `back-end/.env` and restart.
+Browsers only let a page at the address in `FRONT_END_DOMAIN` read the server's replies. If the front-end starts on a port other than 5173, set that address in `back-end/.env` and restart.
 
 ### Other commands
 
