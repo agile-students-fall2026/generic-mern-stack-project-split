@@ -33,3 +33,37 @@ describe('GET /api/events', () => {
     }
   })
 })
+
+describe('POST /api/events', () => {
+  it('responds with 201 and the new event with its id and invite code', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events')
+      .send({ name: '  Ski trip  ' })
+    expect(res).to.have.status(201)
+    expect(res).to.be.json
+    // the name sent, trimmed, not the one in the mock data
+    expect(res.body).to.include({ name: 'Ski trip', status: 'active' })
+    expect(res.body.id).to.be.a('string').that.is.not.empty
+    expect(res.body.inviteCode).to.be.a('string').that.is.not.empty
+  })
+
+  for (const [label, body] of [
+    ['is missing', {}],
+    ['is blank', { name: '   ' }],
+    ['is not text', { name: 42 }],
+  ]) {
+    it(`responds with 400 when the name ${label}`, async () => {
+      const res = await request.execute(app).post('/api/events').send(body)
+      expect(res).to.have.status(400)
+      expect(res).to.be.json
+      expect(res.body.error).to.be.a('string').that.is.not.empty
+    })
+  }
+
+  it('responds with 400 when no body is sent', async () => {
+    const res = await request.execute(app).post('/api/events')
+    expect(res).to.have.status(400)
+    expect(res.body.error).to.be.a('string').that.is.not.empty
+  })
+})
