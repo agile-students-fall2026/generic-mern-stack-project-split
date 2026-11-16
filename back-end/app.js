@@ -1,5 +1,6 @@
 import express from 'express'
 import morgan from 'morgan'
+import eventsRouter from './routes/events.js'
 
 const app = express()
 
@@ -10,5 +11,7 @@ app.use(express.json())
 app.get('/api', (req, res) => {
   res.json({ message: 'Split API is running' })
 })
+
+app.use('/api/events', eventsRouter)
 
 export default app
