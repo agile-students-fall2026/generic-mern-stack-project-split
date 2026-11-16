@@ -1,0 +1,10 @@
+[
+  { "token": "maya-7Q2K", "eventId": "evt_lisbon", "participantId": "p_maya" },
+  { "token": "sam-3TR8", "eventId": "evt_lisbon", "participantId": "p_sam" },
+  {
+    "token": "jordan-5MW2",
+    "eventId": "evt_lisbon",
+    "participantId": "p_jordan"
+  },
+  { "token": "samk-9HD4", "eventId": "evt_lisbon", "participantId": "p_sam_k" }
+]

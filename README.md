@@ -180,6 +180,16 @@ Run these from the `back-end` folder.
 - `npm run coverage` runs the tests and prints a c8 coverage table for every back-end file.
 - `npx c8 --all mocha test/<file>.test.js` shows the coverage of only your own test file.
 
+### Mock data
+
+Mock JSON for back-end routes lives in `back-end/mock/`, which has the same files as the front-end's [mock data](#mock-data). It also has one past event, `evt_cabin` (closed, every payment confirmed), listed in `events.json`. Import a file with the JSON import attribute:
+
+```js
+import events from './mock/events.json' with { type: 'json' }
+```
+
+Every import of a file shares one object, so a route must never change it. Copy it with `structuredClone` first.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for our team's collaboration process and contribution guidelines.
