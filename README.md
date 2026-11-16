@@ -178,6 +178,9 @@ Run these from the `back-end` folder.
 - `npm start` runs the server without restarting on changes.
 - `npm test` runs the tests in `back-end/test` with Mocha.
 - `npm run coverage` runs the tests and prints a c8 coverage table for every back-end file.
+- `npm run lint` checks the code with ESLint.
+- `npm run format` formats the code with Prettier.
+- `npm run format:check` checks the formatting without changing any files.
 - `npx c8 --all mocha test/<file>.test.js` shows the coverage of only your own test file.
 
 ### Mock data
