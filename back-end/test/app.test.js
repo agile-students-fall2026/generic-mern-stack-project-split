@@ -12,4 +12,12 @@ describe('GET /api', () => {
     expect(res).to.be.json
     expect(res.body).to.deep.equal({ message: 'Split API is running' })
   })
+
+  it('allows requests from the front-end', async () => {
+    const res = await request.execute(app).get('/api')
+    expect(res).to.have.header(
+      'access-control-allow-origin',
+      'http://localhost:5173',
+    )
+  })
 })
