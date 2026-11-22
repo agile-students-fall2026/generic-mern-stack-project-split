@@ -5,7 +5,10 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "mocha",
-    "coverage": "c8 --all mocha"
+    "coverage": "c8 --all mocha",
+    "lint": "eslint .",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "type": "module",
   "dependencies": {
@@ -15,10 +18,15 @@
     "morgan": "^1.12.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "c8": "^12.0.0",
     "chai": "^6.3.0",
     "chai-http": "^5.2.1",
-    "mocha": "^12.0.3"
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "mocha": "^12.0.3",
+    "prettier": "^3.10.1"
   },
   "private": true
 }
