@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../api.js'
+
+import { backend } from '../api.js'
+
 import Layout from '../components/Layout.jsx'
 import TextField from '../components/TextField.jsx'
 import Button from '../components/Button.jsx'
@@ -38,22 +40,31 @@ function SignIn() {
 
     setSigningIn(true)
     requestRef.current = new AbortController()
-    // stands in for POST /auth/sign-in; the mock has no passwords,
-    // so any password works for the account in user.json
-    api
-      .get('/user.json', { signal: requestRef.current.signal })
-      .then(response => {
-        if (response.data.email.toLowerCase() === typedEmail.toLowerCase()) {
-          navigate('/', { replace: true })
-        } else {
-          setPasswordError('Incorrect email or password. Try again.')
-          setSigningIn(false)
-          passwordRef.current.focus()
-        }
+
+    backend
+      .post(
+        '/api/auth/sign-in',
+        { email: typedEmail, password: password },
+        { signal: requestRef.current.signal },
+      )
+      .then(() => {
+        navigate('/', { replace: true })
       })
       .catch(error => {
-        if (error.name === 'CanceledError') return
-        setSubmitError('Could not sign in. Try again.')
+        if (error.name === 'CanceledError') {
+          return
+        }
+
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.error
+        ) {
+          setSubmitError(error.response.data.error)
+        } else {
+          setSubmitError('Could not sign in. Try again.')
+        }
+
         setSigningIn(false)
       })
   }
