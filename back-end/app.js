@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import morgan from 'morgan'
-import eventsRouter from './routes/events.js'
+import eventsRouter, { uploadsDir } from './routes/events.js'
 
 import userRouter from './routes/user.js'
 
@@ -20,6 +20,8 @@ app.use(express.json())
 app.get('/api', (req, res) => {
   res.json({ message: 'Split API is running' })
 })
+
+app.use('/uploads', express.static(uploadsDir))
 
 app.use('/api/events', eventsRouter)
 
