@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
 import Sheet from '../components/Sheet.jsx'
 import InviteSheet from '../components/InviteSheet.jsx'
-import api from '../api.js'
+import api, { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -33,6 +33,8 @@ function SettleUp() {
   const [transfers, setTransfers] = useState([])
   const [confirming, setConfirming] = useState(null)
   const [markingPaid, setMarkingPaid] = useState(null)
+  const [savingPaid, setSavingPaid] = useState(false)
+  const [markPaidError, setMarkPaidError] = useState('')
   const [announcement, setAnnouncement] = useState('')
   const [fewestTransfers, setFewestTransfers] = useState([])
   const [showFewest, setShowFewest] = useState(false)
@@ -160,16 +162,21 @@ function SettleUp() {
   // change the status of one payment, keeping it the same row
   function setStatus(target, status) {
     if (isClosed) return
-    const updated = shown.map(transfer => {
-      if (transfer.fromId === target.fromId && transfer.toId === target.toId) {
-        return { ...transfer, status: status }
-      }
-      return transfer
-    })
+    // takes the latest list, because a reply from the back-end can arrive later
+    const update = list =>
+      list.map(transfer => {
+        if (
+          transfer.fromId === target.fromId &&
+          transfer.toId === target.toId
+        ) {
+          return { ...transfer, status: status }
+        }
+        return transfer
+      })
     if (showFewest) {
-      setFewestTransfers(updated)
+      setFewestTransfers(update)
     } else {
-      setTransfers(updated)
+      setTransfers(update)
     }
   }
 
@@ -182,18 +189,35 @@ function SettleUp() {
 
   // I paid outside the app, now it waits for the other person (wireframe 26)
   function markPaid() {
-    if (isClosed) return
-    setStatus(markingPaid, 'pending')
-    setAnnouncement(
-      'Marked ' +
-        formatMoney(markingPaid.amountCents) +
-        ' to ' +
-        nameOf(markingPaid.toId) +
-        ' as paid. Waiting for ' +
-        nameOf(markingPaid.toId) +
-        ' to confirm.',
-    )
-    setMarkingPaid(null)
+    if (isClosed || savingPaid) return
+    const target = markingPaid
+    setSavingPaid(true)
+    setMarkPaidError('')
+    backend
+      .post(`/api/events/${encodeURIComponent(eventId)}/payments/mark-paid`, {
+        fromId: target.fromId,
+        toId: target.toId,
+        plan: showFewest ? 'fewest' : 'all',
+      })
+      .then(response => {
+        setStatus(target, response.data.status)
+        setAnnouncement(
+          'Marked ' +
+            formatMoney(target.amountCents) +
+            ' to ' +
+            nameOf(target.toId) +
+            ' as paid. Waiting for ' +
+            nameOf(target.toId) +
+            ' to confirm.',
+        )
+        setMarkingPaid(null)
+      })
+      .catch(() => {
+        setMarkPaidError('Could not mark this as paid. Try again.')
+      })
+      .finally(() => {
+        setSavingPaid(false)
+      })
   }
 
   return (
@@ -334,10 +358,19 @@ function SettleUp() {
             nameOf(markingPaid.toId) +
             ' will be asked to confirm it.'
           }
-          confirmLabel="Mark paid"
+          confirmLabel={savingPaid ? 'Marking…' : 'Mark paid'}
           onConfirm={markPaid}
-          onClose={() => setMarkingPaid(null)}
-        />
+          onClose={() => {
+            setMarkingPaid(null)
+            setMarkPaidError('')
+          }}
+        >
+          {markPaidError && (
+            <p role="alert" className="text-sm font-semibold">
+              {markPaidError}
+            </p>
+          )}
+        </ConfirmDialog>
       )}
 
       {!isClosed && confirming && (
