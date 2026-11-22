@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../api.js'
+import api, { backend } from '../api.js'
 import CreatedEventsContext from '../CreatedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import Button from '../components/Button.jsx'
@@ -85,8 +85,8 @@ function MyEvents() {
 
   useEffect(() => {
     let ignore = false
-    api
-      .get('/events.json')
+    backend
+      .get('/api/events')
       .then(response => {
         if (!ignore) setEvents(response.data)
       })
