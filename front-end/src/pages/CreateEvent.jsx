@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import api from '../api.js'
+import { backend } from '../api.js'
 import CreatedEventsContext from '../CreatedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import TextField from '../components/TextField.jsx'
@@ -30,11 +30,15 @@ function CreateEvent() {
     setSaving(true)
     setSubmitError('')
     requestRef.current = new AbortController()
-    // stands in for POST /events; the reply gives the new id and invite code
-    api
-      .get('/create-event.json', { signal: requestRef.current.signal })
+    // the reply gives the new id and invite code
+    backend
+      .post(
+        '/api/events',
+        { name: eventName },
+        { signal: requestRef.current.signal },
+      )
       .then(response => {
-        addEvent({ ...response.data, name: eventName })
+        addEvent(response.data)
         // replace, so Back from the new event goes to My events, not this form
         navigate(`/events/${response.data.id}`, {
           replace: true,
