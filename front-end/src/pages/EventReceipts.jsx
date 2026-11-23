@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api from '../api.js'
+import { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -58,9 +58,8 @@ function EventReceipts() {
   // load the event, the signed in user, and the return links
   useEffect(() => {
     Promise.all([
-      api.get(`/events/${encodeURIComponent(eventId)}.json`),
-      api.get('/user.json'),
-      api.get('/return-links.json'),
+      backend.get(`/api/events/${encodeURIComponent(eventId)}`),
+      backend.get('/api/user'),
     ])
       .then(([eventResponse, userResponse, linksResponse]) => {
         setEvent(eventResponse.data)
