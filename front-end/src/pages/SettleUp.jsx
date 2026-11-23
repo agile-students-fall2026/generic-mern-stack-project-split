@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
 import Sheet from '../components/Sheet.jsx'
 import InviteSheet from '../components/InviteSheet.jsx'
-import api, { backend } from '../api.js'
+import { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -43,8 +43,8 @@ function SettleUp() {
   // load the event and the signed in user when the page opens
   useEffect(() => {
     Promise.all([
-      api.get(`/events/${encodeURIComponent(eventId)}.json`),
-      api.get('/user.json'),
+      backend.get(`/api/events/${encodeURIComponent(eventId)}`),
+      backend.get('/api/user'),
     ])
       .then(([eventResponse, userResponse]) => {
         setEvent(eventResponse.data)
