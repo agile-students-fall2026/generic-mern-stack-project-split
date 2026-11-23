@@ -1,15 +1,17 @@
 import { useContext, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+
+import { useNavigate, useParams } from 'react-router-dom'
 
 import Layout from '../components/Layout.jsx'
-import api from '../api.js'
+
+import { backend } from '../api.js'
+
 import JoinedEventsContext from '../JoinedEventsContext.js'
 
 import './JoinEvent.css'
 
 function JoinEvent() {
-  const [invites, setInvites] = useState(null)
-  const [joined, setJoined] = useState(null)
+  const [lookup, setLookup] = useState(null)
 
   const [request, setRequest] = useState(null)
   const [reply, setReply] = useState(null)
@@ -23,19 +25,14 @@ function JoinEvent() {
   useEffect(() => {
     let ignore = false
     if (!request || request.code !== inviteCode) return
-    api
-      .get('/join-event.json')
+
+    const path = '/api/invites/' + encodeURIComponent(request.code) + '/join'
+
+    backend
+      .post(path, { name: request.name })
       .then(res => {
         if (ignore) return
-        if (res.data.eventId === request.eventId) {
-          setReply({ code: request.code, participant: res.data })
-        } else {
-          setJoined({
-            code: request.code,
-            eventId: request.eventId,
-            name: request.name,
-          })
-        }
+        setReply({ code: request.code, participant: res.data })
         setSubmitting(false)
       })
       .catch(() => {
@@ -63,21 +60,34 @@ function JoinEvent() {
   }, [reply, inviteCode, joinedAs, addJoin, navigate])
 
   useEffect(() => {
-    api.get('/invites.json').then(res => {
-      setInvites(res.data)
-    })
-  }, [])
+    let ignore = false
+    const path = '/api/invites/' + encodeURIComponent(inviteCode)
+
+    backend
+      .get(path)
+      .then(res => {
+        if (ignore) return
+        setLookup({ code: inviteCode, invite: res.data, failed: false })
+      })
+      .catch(error => {
+        if (ignore) return
+
+        let failed = true
+        if (error.response && error.response.status === 404) {
+          failed = false
+        }
+
+        setLookup({ code: inviteCode, invite: null, failed: failed })
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [inviteCode])
 
   let invite = null
-
-  if (invites === null) {
-    invite = null
-  } else {
-    for (const item of invites) {
-      if (item.code === inviteCode) {
-        invite = item
-      }
-    }
+  if (lookup && lookup.code === inviteCode) {
+    invite = lookup.invite
   }
 
   function handleSubmit(event) {
@@ -90,26 +100,20 @@ function JoinEvent() {
     } else {
       setSubmitting(true)
       setMessage('')
-      setRequest({ code: inviteCode, eventId: invite.eventId, name: name })
+      setRequest({ code: inviteCode, name: name })
     }
   }
 
-  let showJoined
-
-  if (joined === null) {
-    showJoined = false
-  } else {
-    if (joined.code === inviteCode) {
-      showJoined = true
-    } else {
-      showJoined = false
-    }
-  }
-
-  if (invites === null) {
+  if (!lookup || lookup.code !== inviteCode) {
     return (
       <Layout title="Split">
         <p>Loading invitation...</p>
+      </Layout>
+    )
+  } else if (lookup.failed) {
+    return (
+      <Layout title="Split">
+        <p role="alert">Could not load this invitation. Please try again.</p>
       </Layout>
     )
   } else if (invite === null) {
@@ -117,14 +121,6 @@ function JoinEvent() {
       <Layout title="Split">
         <h1 className="text-heading font-bold">This link isn't valid</h1>
         <p>Invalid link.</p>
-      </Layout>
-    )
-  } else if (showJoined === true) {
-    return (
-      <Layout title="Split">
-        <h1 className="text-heading font-bold">Join {invite.eventName}</h1>
-        <p>Mock join checked for {joined.name}.</p>
-        <Link to={'/events/' + joined.eventId}>Continue to event</Link>
       </Layout>
     )
   } else {
