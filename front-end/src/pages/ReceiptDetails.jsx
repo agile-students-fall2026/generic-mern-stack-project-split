@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import api from '../api.js'
+import { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -36,8 +36,8 @@ function ReceiptDetails() {
   // load the event and the signed in user when the page opens
   useEffect(() => {
     Promise.all([
-      api.get(`/events/${encodeURIComponent(eventId)}.json`),
-      api.get('/user.json'),
+      backend.get(`/api/events/${encodeURIComponent(eventId)}`),
+      backend.get('/api/user'),
     ])
       .then(([eventResponse, userResponse]) => {
         setEvent(eventResponse.data)

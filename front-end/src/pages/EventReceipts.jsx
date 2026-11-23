@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api from '../api.js'
+import api, { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -55,17 +55,15 @@ function EventReceipts() {
   // which sheet is open: 'menu', 'link', or null (#45)
   const [sheet, setSheet] = useState(null)
 
-  // load the event, the signed in user, and the return links
+  // load the event and the signed in user from the back-end (#119)
   useEffect(() => {
     Promise.all([
-      api.get(`/events/${encodeURIComponent(eventId)}.json`),
-      api.get('/user.json'),
-      api.get('/return-links.json'),
+      backend.get(`/api/events/${encodeURIComponent(eventId)}`),
+      backend.get('/api/user'),
     ])
-      .then(([eventResponse, userResponse, linksResponse]) => {
+      .then(([eventResponse, userResponse]) => {
         setEvent(eventResponse.data)
         setUser(userResponse.data)
-        setLinks(linksResponse.data)
       })
       .catch(() => {
         setError('Could not load this event.')
@@ -75,6 +73,17 @@ function EventReceipts() {
   // which participant in this event is me: the guest I joined as in this
   // session, otherwise the signed in user
   const joinedId = joinedAs[eventId]
+
+  // only a guest has a return link (#45). It is read from the mock data until
+  // #116 adds a route, so the receipt list itself never needs the mock files
+  useEffect(() => {
+    if (!joinedId) return
+    api
+      .get('/return-links.json')
+      .then(response => setLinks(response.data))
+      .catch(() => setLinks([]))
+  }, [joinedId])
+
   let me = null
   if (event && user) {
     for (const person of event.participants) {

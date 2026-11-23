@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, matchPath, useLocation } from 'react-router-dom'
-import api from '../api.js'
+import { backend } from '../api.js'
 
 // Kept between pages, so the bar doesn't jump from 3 to 4 tabs on every tab
 const organizerByEvent = new Map()
@@ -16,8 +16,8 @@ function BottomNav({ eventId }) {
   useEffect(() => {
     let ignore = false
     Promise.all([
-      api.get('/user.json'),
-      api.get(`/events/${encodeURIComponent(eventId)}.json`),
+      backend.get('/api/user'),
+      backend.get(`/api/events/${encodeURIComponent(eventId)}`),
     ])
       .then(([user, event]) => {
         const organizer = user.data.id === event.data.organizerId
