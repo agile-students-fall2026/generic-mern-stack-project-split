@@ -202,6 +202,8 @@ Run these from the `back-end` folder.
 
 Routes live in `back-end/routes/`, one file per area (for example `events.js`), each exporting an Express router that `app.js` mounts under `/api`. A route replies to bad input with a 4xx status and `{ "error": "<message>" }`.
 
+Receipt photos sent to `POST /api/events/:eventId/receipts/photo` are stored in `back-end/uploads/`, which git ignores, and served at `/uploads/<file>`. Send the file in a form field named `photo`.
+
 ### Mock data
 
 Mock JSON for back-end routes lives in `back-end/mock/`, which has the same files as the front-end's [mock data](#mock-data). It also has one past event, `evt_cabin` (closed, every payment confirmed), listed in `events.json`. Import a file with the JSON import attribute:
