@@ -9,21 +9,14 @@ function getEvent(eventId) {
   return request.execute(app).get(`/api/events/${eventId}`)
 }
 
-// how much each person ends up paying (negative) or getting (positive).
-// People who come out even are left out, since a plan may skip them entirely
-function netAmounts(transfers) {
-  const net = {}
+// a participant's net amount in a plan: what they receive minus what they pay
+function netAmount(transfers, participantId) {
+  let net = 0
   for (const transfer of transfers) {
-    net[transfer.fromId] = (net[transfer.fromId] || 0) - transfer.amountCents
-    net[transfer.toId] = (net[transfer.toId] || 0) + transfer.amountCents
+    if (transfer.toId === participantId) net = net + transfer.amountCents
+    if (transfer.fromId === participantId) net = net - transfer.amountCents
   }
-  const result = {}
-  for (const id in net) {
-    if (net[id] !== 0) {
-      result[id] = net[id]
-    }
-  }
-  return result
+  return net
 }
 
 // The Fewest transfers view reads settlement.fewest from the event reply (#134)
@@ -38,7 +31,7 @@ describe('GET /api/events/:eventId fewest transfers plan', () => {
     ])
   })
 
-  it('never needs more payments than the full list', async () => {
+  it('has no more transfers than the all plan', async () => {
     for (const eventId of ['evt_lisbon', 'evt_lisbon_settling', 'evt_cabin']) {
       const res = await getEvent(eventId)
       const { all, fewest } = res.body.settlement
@@ -47,12 +40,17 @@ describe('GET /api/events/:eventId fewest transfers plan', () => {
     }
   })
 
-  it('leaves everyone paying or getting the same amount as the full list', async () => {
+  it('leaves each participant with the same net amount as the all plan', async () => {
     for (const eventId of ['evt_lisbon', 'evt_lisbon_settling', 'evt_cabin']) {
       const res = await getEvent(eventId)
       const { all, fewest } = res.body.settlement
 
-      expect(netAmounts(fewest)).to.deep.equal(netAmounts(all))
+      for (const participant of res.body.participants) {
+        expect(
+          netAmount(fewest, participant.id),
+          `${participant.name} in ${eventId}`,
+        ).to.equal(netAmount(all, participant.id))
+      }
     }
   })
 
