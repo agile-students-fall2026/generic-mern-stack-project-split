@@ -40,4 +40,27 @@ router.get('/:eventId', (req, res) => {
   res.status(404).json({ error: 'Event not found.' })
 })
 
+router.post('/:eventId/payments/mark-paid', (req, res) => {
+  const event = eventDetails.find(item => item.id === req.params.eventId)
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+  // the same two people can owe different amounts in the two plans
+  const { fromId, toId, plan = 'all' } = req.body ?? {}
+  const transfer =
+    Object.hasOwn(event.settlement, plan) &&
+    event.settlement[plan].find(
+      item => item.fromId === fromId && item.toId === toId,
+    )
+  if (!transfer) {
+    return res.status(404).json({ error: 'Payment not found.' })
+  }
+  if (transfer.status !== 'unpaid') {
+    return res
+      .status(409)
+      .json({ error: 'This payment is already marked paid.' })
+  }
+  res.json({ ...transfer, status: 'pending' })
+})
+
 export default router
