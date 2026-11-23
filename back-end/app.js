@@ -7,6 +7,8 @@ import userRouter from './routes/user.js'
 
 import authRouter from './routes/auth.js'
 
+import invitesRouter from './routes/invites.js'
+
 const app = express()
 
 // skip runs per request, because the test sets NODE_ENV after importing this module
@@ -26,5 +28,7 @@ app.use('/api/events', eventsRouter)
 app.use('/api/user', userRouter)
 
 app.use('/api/auth', authRouter)
+
+app.use('/api/invites', invitesRouter)
 
 export default app
