@@ -10,6 +10,8 @@ import authRouter from './routes/auth.js'
 
 import invitesRouter from './routes/invites.js'
 
+import returnLinksRouter from './routes/return-links.js'
+
 const app = express()
 
 // skip runs per request, because the test sets NODE_ENV after importing this module
@@ -35,5 +37,7 @@ app.use('/api/user', userRouter)
 app.use('/api/auth', authRouter)
 
 app.use('/api/invites', invitesRouter)
+
+app.use('/api/return-links', returnLinksRouter)
 
 export default app
