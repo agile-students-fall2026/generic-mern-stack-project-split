@@ -11,6 +11,8 @@ import cabin from '../mock/events/evt_cabin.json' with { type: 'json' }
 import created from '../mock/events/evt_7hq2xm.json' with { type: 'json' }
 import settling from '../mock/events/evt_lisbon_settling.json' with { type: 'json' }
 
+import returnLinks from '../mock/return-links.json' with { type: 'json' }
+
 const router = Router()
 
 // receipt photos are stored here, and app.js serves them at /uploads
@@ -103,6 +105,22 @@ router.post('/:eventId/receipts/photo', (req, res, next) => {
     const host = `${req.protocol}://${req.get('host')}`
     res.status(201).json({ photoUrl: `${host}/uploads/${req.file.filename}` })
   })
+})
+
+router.get('/:eventId/participants/:participantId/return-link', (req, res) => {
+  const eventId = req.params.eventId
+  const participantId = req.params.participantId
+
+  for (let i = 0; i < returnLinks.length; i++) {
+    const link = returnLinks[i]
+
+    if (link.eventId === eventId && link.participantId === participantId) {
+      res.json(link)
+      return
+    }
+  }
+
+  res.status(404).json({ error: 'Return link not found.' })
 })
 
 export default router
