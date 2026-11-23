@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api, { backend } from '../api.js'
+import { backend } from '../api.js'
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
@@ -46,7 +46,7 @@ function EventReceipts() {
   const closure = closedEvents[eventId]
   const isClosed = Boolean(closure) || event?.status === 'closed'
   const [user, setUser] = useState(null)
-  const [links, setLinks] = useState([])
+  const [link, setLink] = useState(null)
   const [error, setError] = useState('')
 
   // is the "Add receipt" menu open (wireframe 13, #49)
@@ -74,15 +74,29 @@ function EventReceipts() {
   // session, otherwise the signed in user
   const joinedId = joinedAs[eventId]
 
-  // only a guest has a return link (#45). It is read from the mock data until
-  // #116 adds a route, so the receipt list itself never needs the mock files
+  // only a guest needs a personal return link
   useEffect(() => {
     if (!joinedId) return
-    api
-      .get('/return-links.json')
-      .then(response => setLinks(response.data))
-      .catch(() => setLinks([]))
-  }, [joinedId])
+
+    let ignore = false
+    const eventPath = '/api/events/' + encodeURIComponent(eventId)
+    const participantPath = '/participants/' + encodeURIComponent(joinedId)
+
+    backend
+      .get(eventPath + participantPath + '/return-link')
+      .then(response => {
+        if (ignore) return
+        setLink(response.data)
+      })
+      .catch(() => {
+        if (ignore) return
+        setLink(null)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [eventId, joinedId])
 
   let me = null
   if (event && user) {
@@ -93,14 +107,9 @@ function EventReceipts() {
     }
   }
 
-  // a guest's personal return link, so they can get back in later (#45)
   let returnLink = null
-  if (joinedId) {
-    for (const link of links) {
-      if (link.eventId === eventId && link.participantId === joinedId) {
-        returnLink = link
-      }
-    }
+  if (link && link.eventId === eventId && link.participantId === joinedId) {
+    returnLink = link
   }
 
   // only show a sheet opened on this visit to the page

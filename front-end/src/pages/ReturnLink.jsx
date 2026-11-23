@@ -1,8 +1,10 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import api from '../api.js'
+
 import JoinedEventsContext from '../JoinedEventsContext.js'
 import Layout from '../components/Layout.jsx'
+
+import { backend } from '../api.js'
 
 function ReturnLink() {
   const { returnToken } = useParams()
@@ -14,34 +16,26 @@ function ReturnLink() {
     let ignore = false
     async function loadLink() {
       try {
-        const response = await api.get('/return-links.json')
-        let link = null
-        for (const item of response.data) {
-          if (item.token === returnToken) {
-            link = item
-            break
-          }
-        }
-        if (!link) {
-          if (!ignore)
-            setFailure({
-              returnToken,
-              message: "This personal link isn't valid.",
-            })
-          return
-        }
-        const eventResponse = await api.get(
-          `/events/${encodeURIComponent(link.eventId)}.json`,
+        const response = await backend.get(
+          '/api/return-links/' + encodeURIComponent(returnToken),
+        )
+        const link = response.data
+
+        const eventResponse = await backend.get(
+          '/api/events/' + encodeURIComponent(link.eventId),
         )
         const event = eventResponse.data
         let participant = null
+
         for (const person of event.participants) {
           if (person.id === link.participantId) {
             participant = person
             break
           }
         }
+
         if (ignore) return
+
         if (!participant || event.id !== link.eventId) {
           setFailure({
             returnToken,
@@ -49,17 +43,27 @@ function ReturnLink() {
           })
           return
         }
+
         setResult({
           returnToken,
           eventId: event.id,
           participantId: participant.id,
         })
-      } catch {
-        if (!ignore)
+      } catch (error) {
+        if (ignore) return
+
+        if (error.response && error.response.status === 404) {
           setFailure({
             returnToken,
-            message: 'Could not open your personal link. Please try again.',
+            message: "This personal link isn't valid.",
           })
+          return
+        }
+
+        setFailure({
+          returnToken,
+          message: 'Could not open your personal link. Please try again.',
+        })
       }
     }
     loadLink()
