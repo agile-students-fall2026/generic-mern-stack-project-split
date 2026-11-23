@@ -88,6 +88,32 @@ router.post('/:eventId/payments/mark-paid', (req, res) => {
   res.json({ ...transfer, status: 'pending' })
 })
 
+// the receiver confirms the money arrived (#137): a pending payment becomes
+// confirmed. Like mark paid, it replies with the new state and saves nothing
+router.post('/:eventId/payments/confirm', (req, res) => {
+  const event = eventDetails.find(item => item.id === req.params.eventId)
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+  // fromId pays and toId receives; plan picks the all or fewest transfers list
+  const { fromId, toId, plan = 'all' } = req.body ?? {}
+  const transfer =
+    Object.hasOwn(event.settlement, plan) &&
+    event.settlement[plan].find(
+      item => item.fromId === fromId && item.toId === toId,
+    )
+  if (!transfer) {
+    return res.status(404).json({ error: 'Payment not found.' })
+  }
+  // only a payment the payer marked as paid can be confirmed, and only once
+  if (transfer.status !== 'pending') {
+    return res
+      .status(409)
+      .json({ error: 'Only a payment marked as paid can be confirmed.' })
+  }
+  res.json({ ...transfer, status: 'confirmed' })
+})
+
 router.post('/:eventId/receipts/photo', (req, res, next) => {
   if (!eventDetails.some(item => item.id === req.params.eventId)) {
     return res.status(404).json({ error: 'Event not found.' })
