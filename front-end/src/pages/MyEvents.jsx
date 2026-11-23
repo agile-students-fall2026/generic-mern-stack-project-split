@@ -63,24 +63,48 @@ function MyEvents() {
   const [user, setUser] = useState(null)
   const [accountOpen, setAccountOpen] = useState(false)
 
+  const [accountLoading, setAccountLoading] = useState(true)
+  const [accountError, setAccountError] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState('')
+
   // the signed in account, for "Signed in as" in the Account menu
   useEffect(() => {
     let ignore = false
-    api
-      .get('/user.json')
+
+    backend
+      .get('/api/user')
       .then(response => {
-        if (!ignore) setUser(response.data)
+        if (!ignore) {
+          setUser(response.data)
+          setAccountLoading(false)
+        }
       })
-      // without it the menu still offers Sign out, just without the email
-      .catch(() => {})
+      .catch(() => {
+        if (!ignore) {
+          setAccountError('Could not load your account.')
+          setAccountLoading(false)
+        }
+      })
+
     return () => {
       ignore = true
     }
   }, [])
 
   function signOut() {
-    // stands in for POST /auth/sign-out; replace, so Back doesn't return here
-    navigate('/sign-in', { replace: true })
+    setSignOutError('')
+    setSigningOut(true)
+
+    backend
+      .post('/api/auth/sign-out')
+      .then(() => {
+        navigate('/sign-in', { replace: true })
+      })
+      .catch(() => {
+        setSignOutError('can not sign out. try again please.')
+        setSigningOut(false)
+      })
   }
 
   useEffect(() => {
@@ -146,7 +170,10 @@ function MyEvents() {
           description={user ? `Signed in as ${user.email}` : undefined}
           onClose={() => setAccountOpen(false)}
         >
-          <Button variant="outline" onClick={signOut}>
+          {accountLoading && <p role="status">Loading account…</p>}
+          {accountError && <p role="alert">{accountError}</p>}
+          {signOutError && <p role="alert">{signOutError}</p>}
+          <Button variant="outline" onClick={signOut} disabled={signingOut}>
             Sign out
           </Button>
         </Sheet>
