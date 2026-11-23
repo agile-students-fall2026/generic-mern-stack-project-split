@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import api from '../api.js'
+import { backend } from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
@@ -22,8 +22,8 @@ function Balances() {
 
   useEffect(() => {
     let ignore = false
-    api
-      .get(`/events/${encodeURIComponent(eventId)}.json`)
+    backend
+      .get(`/api/events/${encodeURIComponent(eventId)}`)
       .then(response => {
         if (!ignore) setResult({ eventId, event: response.data })
       })
