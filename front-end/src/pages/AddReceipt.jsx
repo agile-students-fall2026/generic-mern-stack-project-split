@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api from '../api.js'
+import api, { backend } from '../api.js'
 import Button from '../components/Button.jsx'
 import Layout from '../components/Layout.jsx'
 import TextField from '../components/TextField.jsx'
@@ -38,9 +38,8 @@ function AddReceipt({ addReceipt }) {
   const { eventId } = useParams()
   // set by "Use a photo" on the receipt list (#49)
   const { state } = useLocation()
-  // shortcut: a blob URL may not survive a reload, until the back-end stores photos
-  const photoUrl = state?.photoUrl ?? null
-  const photoName = state?.photoName ?? ''
+  // the picked File; the back-end stores it and replies with its address
+  const photo = state?.photo ?? null
   const navigate = useNavigate()
   const [event, setEvent] = useState(null)
   const { closedEvents } = useContext(EventClosureContext)
@@ -53,9 +52,11 @@ function AddReceipt({ addReceipt }) {
   const [message, setMessage] = useState('')
   const [saved, setSaved] = useState(null)
   const [merchant, setMerchant] = useState('')
-  // keyed by photoUrl so a result for an earlier photo never shows
+  // both keyed by photo so a result for an earlier photo never shows
+  const [stored, setStored] = useState(null)
+  const photoUrl = stored?.photo === photo ? stored.photoUrl : null
   const [scan, setScan] = useState(null)
-  const scanned = scan?.photoUrl === photoUrl ? scan : null
+  const scanned = scan?.photo === photo ? scan : null
   const pickInput = useRef(null)
   const banner = useRef(null)
   // read only once the event has loaded, since loading it clears the total
@@ -97,38 +98,37 @@ function AddReceipt({ addReceipt }) {
   }, [eventId])
 
   useEffect(() => {
-    if (!photoUrl || !eventReady) return
+    if (!photo || !eventReady) return
     let ignore = false
-    // stands in for the real receipt reader until the back-end exists
-    const timer = setTimeout(() => {
-      api
-        .get('/scan-receipt.json')
-        .then(response => {
-          if (ignore) return
-          const found = /blurry/i.test(photoName)
-            ? response.data.failed
-            : response.data.read
-          setScan({ photoUrl, totalCents: found.totalCents })
-          setMerchant(found.merchant ?? '')
-          // plain digits, since readCents rejects "$36.00"
-          setTotal(
-            found.totalCents === null
-              ? ''
-              : (found.totalCents / 100).toFixed(2),
-          )
-        })
-        .catch(() => {
-          if (ignore) return
-          setScan({ photoUrl, totalCents: null })
-          setMerchant('')
-          setTotal('')
-        })
-    }, 1500)
+    const form = new FormData()
+    form.append('photo', photo)
+    backend
+      .post(`/api/events/${encodeURIComponent(eventId)}/receipts/photo`, form)
+      .then(response => {
+        if (ignore) return null
+        setStored({ photo, photoUrl: response.data.photoUrl })
+        return backend.post('/api/receipts/scan', form)
+      })
+      .then(response => {
+        if (ignore) return
+        const found = response.data
+        setScan({ photo, totalCents: found.totalCents })
+        setMerchant(found.merchant ?? '')
+        // plain digits, since readCents rejects "$36.00"
+        setTotal(
+          found.totalCents === null ? '' : (found.totalCents / 100).toFixed(2),
+        )
+      })
+      .catch(() => {
+        if (ignore) return
+        setScan({ photo, totalCents: null })
+        setMerchant('')
+        setTotal('')
+      })
     return () => {
       ignore = true
-      clearTimeout(timer)
     }
-  }, [photoUrl, photoName, eventReady])
+  }, [photo, eventId, eventReady])
 
   // the reading screen is swapped for the form, so move focus to the result
   useEffect(() => {
@@ -139,12 +139,9 @@ function AddReceipt({ addReceipt }) {
   function photoPicked(changeEvent) {
     const file = changeEvent.target.files[0]
     if (!file) return
-    const picked = URL.createObjectURL(file)
-    // the replaced photo was never saved, so let the browser free it
-    URL.revokeObjectURL(photoUrl)
     navigate(`/events/${eventId}/receipts/new`, {
       replace: true,
-      state: { photoUrl: picked, photoName: file.name },
+      state: { photo: file },
     })
   }
 
@@ -331,14 +328,16 @@ function AddReceipt({ addReceipt }) {
         <p className="text-sm">Refreshing clears this temporary receipt.</p>
       </div>
     )
-  } else if (photoUrl && !scanned) {
+  } else if (photo && !scanned) {
     content = (
       <div className="space-y-5">
-        <img
-          src={photoUrl}
-          alt="The receipt photo you picked"
-          className="h-96 w-full rounded-xl object-cover"
-        />
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt="The receipt photo you picked"
+            className="h-96 w-full rounded-xl object-cover"
+          />
+        )}
         <h2 className="text-xl font-bold">Reading receipt…</h2>
         <div
           role="progressbar"
@@ -368,14 +367,18 @@ function AddReceipt({ addReceipt }) {
             className={`rounded-xl bg-surface px-3 py-2.5 ${failed ? 'border-2 border-ink' : 'border border-line'}`}
           >
             <p className="text-body font-semibold">
-              {failed
-                ? "Couldn't read this photo"
-                : 'Read from photo, check it'}
+              {!photoUrl
+                ? "Couldn't upload this photo"
+                : failed
+                  ? "Couldn't read this photo"
+                  : 'Read from photo, check it'}
             </p>
             <p className="text-caption text-muted">
-              {failed
-                ? 'Enter the details yourself. The photo stays attached.'
-                : 'Fix anything that looks wrong before saving.'}
+              {!photoUrl
+                ? 'Enter the details yourself. No photo is attached.'
+                : failed
+                  ? 'Enter the details yourself. The photo stays attached.'
+                  : 'Fix anything that looks wrong before saving.'}
             </p>
           </div>
         )}
