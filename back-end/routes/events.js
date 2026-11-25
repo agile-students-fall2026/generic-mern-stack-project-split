@@ -67,6 +67,40 @@ router.get('/:eventId', (req, res) => {
   res.status(404).json({ error: 'Event not found.' })
 })
 
+router.post('/:eventId/participants/merge', (req, res) => {
+  const event = eventDetails.find(item => item.id === req.params.eventId)
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+
+  const { sourceId, targetId } = req.body ?? {}
+  if (
+    typeof sourceId !== 'string' ||
+    !sourceId.trim() ||
+    typeof targetId !== 'string' ||
+    !targetId.trim()
+  ) {
+    return res.status(400).json({ error: 'Provide sourceId and targetId.' })
+  }
+
+  const source = event.participants.find(item => item.id === sourceId)
+  const target = event.participants.find(item => item.id === targetId)
+  if (!source || !target) {
+    return res.status(404).json({ error: 'Participant not found.' })
+  }
+  if (sourceId === targetId) {
+    return res.status(400).json({ error: 'Choose two different participants.' })
+  }
+  if (source.role === 'organizer') {
+    return res.status(400).json({ error: 'Cannot merge away the organizer.' })
+  }
+
+  // Return the remaining participants without changing the shared mock data.
+  // Receipt reassignment and persistence belong to the database stage.
+  const participants = event.participants.filter(item => item.id !== sourceId)
+  res.json({ participants })
+})
+
 router.post('/:eventId/payments/mark-paid', (req, res) => {
   const event = eventDetails.find(item => item.id === req.params.eventId)
   if (!event) {

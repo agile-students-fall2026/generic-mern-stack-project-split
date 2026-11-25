@@ -10,6 +10,7 @@ function ConfirmDialog({
   confirmLabel,
   onConfirm,
   onClose,
+  busy = false,
   children,
 }) {
   const titleId = useId()
@@ -19,7 +20,7 @@ function ConfirmDialog({
     <Modal
       titleId={titleId}
       descriptionId={description ? descriptionId : undefined}
-      onClose={onClose}
+      onClose={busy ? () => {} : onClose}
       className="m-auto w-[calc(100%-64px)] max-w-[329px] rounded-2xl"
     >
       <div className="p-5">
@@ -33,10 +34,12 @@ function ConfirmDialog({
         )}
         {children && <div className="mt-4">{children}</div>}
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={onConfirm}>{confirmLabel}</Button>
+          <Button onClick={onConfirm} disabled={busy}>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </Modal>
