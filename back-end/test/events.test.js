@@ -152,5 +152,80 @@ describe('POST /api/events/evt_lisbon/receipts', () => {
     expect(res).to.have.status(201)
     expect(res.body.id).to.be.a('string').that.is.not.empty
     expect(res.body.totalCents).to.equal(1000)
+    expect(res.body.split).to.equal('equal')
+  })
+  it('creates a receipt for a percentage split', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events/evt_lisbon/receipts')
+      .send({
+        merchant: 'Lunch',
+        date: '2026-11-25',
+        totalCents: 1000,
+        payerId: 'p_alex',
+        split: 'percent',
+        shares: [
+          { participantId: 'p_alex', amountCents: 600, percent: 60 },
+          { participantId: 'p_maya', amountCents: 400, percent: 40 },
+        ],
+      })
+
+    expect(res).to.have.status(201)
+    expect(res.body.split).to.equal('percent')
+    expect(res.body.shares[0].percent).to.equal(60)
+  })
+
+  it('rejects a percentage outside 0 to 100', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events/evt_lisbon/receipts')
+      .send({
+        totalCents: 1000,
+        payerId: 'p_alex',
+        split: 'percent',
+        shares: [
+          { participantId: 'p_alex', amountCents: 600, percent: 101 },
+          { participantId: 'p_maya', amountCents: 400, percent: -1 },
+        ],
+      })
+
+    expect(res).to.have.status(400)
+    expect(res.body.error).to.equal('Enter a percentage from 0 to 100.')
+  })
+
+  it('rejects percentages that do not add up to 100', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events/evt_lisbon/receipts')
+      .send({
+        totalCents: 1000,
+        payerId: 'p_alex',
+        split: 'percent',
+        shares: [
+          { participantId: 'p_alex', amountCents: 600, percent: 60 },
+          { participantId: 'p_maya', amountCents: 400, percent: 30 },
+        ],
+      })
+
+    expect(res).to.have.status(400)
+    expect(res.body.error).to.equal('Percentages must add up to 100.')
+  })
+
+  it('rejects percentage shares that do not add up to the receipt total', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events/evt_lisbon/receipts')
+      .send({
+        totalCents: 1000,
+        payerId: 'p_alex',
+        split: 'percent',
+        shares: [
+          { participantId: 'p_alex', amountCents: 600, percent: 60 },
+          { participantId: 'p_maya', amountCents: 399, percent: 40 },
+        ],
+      })
+
+    expect(res).to.have.status(400)
+    expect(res.body.error).to.equal('Shares must add up to the total.')
   })
 })

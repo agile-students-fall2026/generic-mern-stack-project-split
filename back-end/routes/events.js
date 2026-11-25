@@ -191,7 +191,14 @@ router.post('/:eventId/receipts', (req, res) => {
     return res.status(400).json({ error: 'Choose at least one participant.' })
   }
 
+  let split = 'equal'
+  if (receipt.split === 'percent') {
+    split = 'percent'
+  }
+
   let sum = 0
+  let percentSum = 0
+
   for (const share of shares) {
     if (!share) {
       return res
@@ -207,6 +214,23 @@ router.post('/:eventId/receipts', (req, res) => {
     }
 
     sum = sum + amountCents
+
+    if (split === 'percent') {
+      const percent = share.percent
+      if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+        return res
+          .status(400)
+          .json({ error: 'Enter a percentage from 0 to 100.' })
+      }
+
+      percentSum = percentSum + percent
+    }
+  }
+
+  if (split === 'percent') {
+    if (percentSum < 99.999999 || percentSum > 100.000001) {
+      return res.status(400).json({ error: 'Percentages must add up to 100.' })
+    }
   }
 
   if (sum !== totalCents) {
@@ -227,6 +251,7 @@ router.post('/:eventId/receipts', (req, res) => {
     date: receipt.date,
     totalCents: totalCents,
     payerId: receipt.payerId,
+    split: split,
     photoUrl: photoUrl,
     shares: shares,
   })
