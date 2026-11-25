@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api from '../api.js'
+import { backend } from '../api.js'
 import Layout from '../components/Layout.jsx'
 import BottomNav from '../components/BottomNav.jsx'
 import ListRow from '../components/ListRow.jsx'
@@ -107,8 +107,12 @@ function mergeParticipants(event, sourceId, targetId) {
 
 function People() {
   const { eventId } = useParams()
+  // Reset page state if navigation changes the event without unmounting the route.
+  return <PeopleEvent key={eventId} eventId={eventId} />
+}
 
-  // data loaded from the mock files
+function PeopleEvent({ eventId }) {
+  // Event data comes from the Express back-end.
   const [event, setEvent] = useState(null)
   const { closedEvents } = useContext(EventClosureContext)
   const closure = closedEvents[eventId]
@@ -126,14 +130,16 @@ function People() {
   const [mergeOpen, setMergeOpen] = useState(false)
   const [targetId, setTargetId] = useState('')
   const [confirmMergeOpen, setConfirmMergeOpen] = useState(false)
+  const [merging, setMerging] = useState(false)
+  const [mergeError, setMergeError] = useState('')
   const [notice, setNotice] = useState('')
   const target = participants.find(person => person.id === targetId)
 
   // load the event when the page opens
   useEffect(() => {
     let cancelled = false
-    api
-      .get(`/events/${encodeURIComponent(eventId)}.json`)
+    backend
+      .get(`/api/events/${encodeURIComponent(eventId)}`)
       .then(response => {
         if (cancelled) return
         setEvent(response.data)
@@ -172,18 +178,55 @@ function People() {
   }
 
   function closeMerge() {
+    if (merging) return
     setMergeOpen(false)
     setConfirmMergeOpen(false)
     setTargetId('')
     setSelected(null)
+    setMergeError('')
   }
 
-  function saveMerge() {
-    if (isClosed) return
+  async function saveMerge() {
+    if (isClosed || merging) return
     if (!selected || !target) return
-    setEvent(current => mergeParticipants(current, selected.id, target.id))
-    setNotice(`${selected.name} merged into ${target.name}`)
-    closeMerge()
+    setMerging(true)
+    setMergeError('')
+    try {
+      const response = await backend.post(
+        `/api/events/${encodeURIComponent(eventId)}/participants/merge`,
+        { sourceId: selected.id, targetId: target.id },
+      )
+      setEvent(current => {
+        const merged = mergeParticipants(current, selected.id, target.id)
+        // The mock server does not persist earlier merges. Do not restore people
+        // already removed on this page, or overwrite locally renamed names.
+        return {
+          ...merged,
+          participants: response.data.participants
+            .filter(person =>
+              merged.participants.some(item => item.id === person.id),
+            )
+            .map(person => ({
+              ...person,
+              name: merged.participants.find(item => item.id === person.id)
+                .name,
+            })),
+        }
+      })
+      setNotice(`${selected.name} merged into ${target.name}`)
+      setMergeOpen(false)
+      setConfirmMergeOpen(false)
+      setTargetId('')
+      setSelected(null)
+    } catch (error) {
+      setMergeError(
+        typeof error.response?.data?.error === 'string'
+          ? error.response.data.error
+          : 'Could not merge participants. Please try again.',
+      )
+    } finally {
+      setMerging(false)
+    }
   }
 
   // the organizer is "you" for now, since only the organizer sees this page
@@ -195,7 +238,9 @@ function People() {
       subtitle={!mergeOpen && organizer ? 'You: ' + organizer.name : undefined}
       left={
         mergeOpen ? (
-          <button onClick={closeMerge}>Cancel</button>
+          <button onClick={closeMerge} disabled={merging}>
+            Cancel
+          </button>
         ) : (
           <Link to="/">Back</Link>
         )
@@ -209,9 +254,17 @@ function People() {
       {isClosed && (
         <p className="mt-2 text-body text-muted">Closed · read-only</p>
       )}
-      {error && <p className="mt-2 font-semibold">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 font-semibold">
+          {error}
+        </p>
+      )}
 
-      {!event && !error && <p className="mt-2 text-muted">Loading people…</p>}
+      {!event && !error && (
+        <p role="status" className="mt-2 text-muted">
+          Loading people…
+        </p>
+      )}
 
       {!isClosed && mergeOpen && (
         <>
@@ -219,7 +272,7 @@ function People() {
             Pick the person {selected.name} really is. Their receipts and
             payments will move to that person.
           </p>
-          <fieldset className="mt-4">
+          <fieldset className="mt-4" disabled={merging}>
             <legend className="sr-only">Merge into</legend>
             {participants
               .filter(person => person.id !== selected.id)
@@ -250,8 +303,11 @@ function People() {
           </fieldset>
           <Button
             className="mt-4 w-full"
-            disabled={!target}
-            onClick={() => setConfirmMergeOpen(true)}
+            disabled={!target || merging}
+            onClick={() => {
+              setMergeError('')
+              setConfirmMergeOpen(true)
+            }}
           >
             Continue
           </Button>
@@ -325,10 +381,18 @@ function People() {
         <ConfirmDialog
           title={`Merge ${selected.name} into ${target.name}?`}
           description={`${selected.name} will be removed. Their receipts and payments move to ${target.name}. This can't be undone.`}
-          confirmLabel="Merge"
+          confirmLabel={merging ? 'Merging…' : 'Merge'}
+          busy={merging}
           onConfirm={saveMerge}
           onClose={() => setConfirmMergeOpen(false)}
-        />
+        >
+          {mergeError && (
+            <p role="alert" className="font-semibold">
+              {mergeError}
+            </p>
+          )}
+          {merging && <p role="status">Merging participants…</p>}
+        </ConfirmDialog>
       )}
 
       {/* Rename dialog (wireframe 33) */}
