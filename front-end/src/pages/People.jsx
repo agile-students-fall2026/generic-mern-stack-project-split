@@ -127,6 +127,7 @@ function PeopleEvent({ eventId }) {
   const [renameOpen, setRenameOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [nameError, setNameError] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
   const [targetId, setTargetId] = useState('')
   const [confirmMergeOpen, setConfirmMergeOpen] = useState(false)
@@ -163,18 +164,41 @@ function PeopleEvent({ eventId }) {
     setSelected(null)
   }
 
+  // send the new name to the back-end, then show the name from its reply (#130)
   function saveRename() {
-    if (isClosed) return
+    if (isClosed || savingName) return
+    // checked here too, so an empty name doesn't need a trip to the server
     if (newName.trim() === '') {
       setNameError('Enter a name.')
       return
     }
-    // make a new list where only the selected person has the new name
-    const updated = participants.map(person =>
-      person.id === selected.id ? { ...person, name: newName.trim() } : person,
-    )
-    setEvent({ ...event, participants: updated })
-    closeRename()
+    setSavingName(true)
+    setNameError('')
+    backend
+      .post(
+        `/api/events/${encodeURIComponent(eventId)}/participants/${encodeURIComponent(selected.id)}/rename`,
+        { name: newName },
+      )
+      .then(response => {
+        const renamed = response.data
+        // make a new list where only the renamed person changes
+        setEvent(current => ({
+          ...current,
+          participants: current.participants.map(person =>
+            person.id === renamed.id ? renamed : person,
+          ),
+        }))
+        closeRename()
+      })
+      .catch(error => {
+        // the server explains a 400 or 404; otherwise the request never got there
+        setNameError(
+          error.response?.data?.error || 'Could not rename. Try again.',
+        )
+      })
+      .finally(() => {
+        setSavingName(false)
+      })
   }
 
   function closeMerge() {
@@ -399,7 +423,8 @@ function PeopleEvent({ eventId }) {
       {!isClosed && renameOpen && (
         <ConfirmDialog
           title="Rename participant"
-          confirmLabel="Save"
+          confirmLabel={savingName ? 'Saving…' : 'Save'}
+          busy={savingName}
           onConfirm={saveRename}
           onClose={closeRename}
         >
