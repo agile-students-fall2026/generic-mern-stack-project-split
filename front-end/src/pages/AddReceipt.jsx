@@ -296,37 +296,27 @@ function AddReceipt({ addReceipt }) {
       shares: shares,
     }
 
-    if (split === 'equal') {
-      setMessage('')
-      setSaving(true)
-      backend
-        .post(
-          '/api/events/' + encodeURIComponent(eventId) + '/receipts',
-          receipt,
-        )
-        .then(response => {
-          setSaving(false)
+    const path = '/api/events/' + encodeURIComponent(eventId) + '/receipts'
 
-          if (addReceipt(response.data) === false) {
-            setMessage('This event is closed. New receipts cannot be added.')
-            return
-          }
-          setSaved(response.data)
-        })
-        .catch(() => {
-          setSaving(false)
-          setMessage('Could not save this receipt. Please try again.')
-        })
-
-      return
-    }
-
-    if (addReceipt(receipt) === false) {
-      setMessage('This event is closed. New receipts cannot be added.')
-      return
-    }
     setMessage('')
-    setSaved(receipt)
+    setSaving(true)
+
+    backend
+      .post(path, receipt)
+      .then(response => {
+        setSaving(false)
+
+        if (addReceipt(response.data) === false) {
+          setMessage('This event is closed. New receipts cannot be added.')
+          return
+        }
+
+        setSaved(response.data)
+      })
+      .catch(() => {
+        setSaving(false)
+        setMessage('Could not save this receipt. Please try again.')
+      })
   }
 
   let content
