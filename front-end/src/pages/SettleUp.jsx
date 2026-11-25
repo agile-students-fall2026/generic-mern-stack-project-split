@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
 import Sheet from '../components/Sheet.jsx'
@@ -21,13 +21,20 @@ function formatMoney(cents) {
 
 function SettleUp() {
   const { eventId } = useParams()
+  return <SettleUpEvent key={eventId} eventId={eventId} />
+}
+
+function SettleUpEvent({ eventId }) {
   const navigate = useNavigate()
   const { closedEvents, closeEvent } = useContext(EventClosureContext)
   const closure = closedEvents[eventId]
   const [sheet, setSheet] = useState(null)
 
-  // data loaded from the mock files
-  const [event, setEvent] = useState(null)
+  const [loadedEvent, setEvent] = useState(null)
+  const event = closure?.event ?? loadedEvent
+  const [closing, setClosing] = useState(false)
+  const [closeError, setCloseError] = useState('')
+  const closeRequest = useRef(null)
   const [user, setUser] = useState(null)
   const [error, setError] = useState('')
   const [transfers, setTransfers] = useState([])
@@ -44,19 +51,25 @@ function SettleUp() {
 
   // load the event and the signed in user when the page opens
   useEffect(() => {
+    let cancelled = false
     Promise.all([
       backend.get(`/api/events/${encodeURIComponent(eventId)}`),
       backend.get('/api/user'),
     ])
       .then(([eventResponse, userResponse]) => {
+        if (cancelled) return
         setEvent(eventResponse.data)
         setUser(userResponse.data)
         setTransfers(eventResponse.data.settlement.all)
         setFewestTransfers(eventResponse.data.settlement.fewest)
       })
       .catch(() => {
-        setError('Could not load this event.')
+        if (!cancelled) setError('Could not load this event.')
       })
+    return () => {
+      cancelled = true
+      closeRequest.current?.abort()
+    }
   }, [eventId])
 
   // which participant in this event is me: the guest I joined as in this
@@ -87,11 +100,42 @@ function SettleUp() {
     outstanding === 0,
   )
 
-  function confirmClose() {
-    if (!canClose) return
-    closeEvent(eventId, allTransfers)
-    setSheet(null)
-    navigate(`/events/${encodeURIComponent(eventId)}`)
+  async function confirmClose() {
+    if (!canClose || closeRequest.current) return
+    const controller = new AbortController()
+    closeRequest.current = controller
+    setClosing(true)
+    setCloseError('')
+    try {
+      const response = await backend.post(
+        `/api/events/${encodeURIComponent(eventId)}/close`,
+        undefined,
+        { signal: controller.signal, timeout: 15000 },
+      )
+      if (controller.signal.aborted) return
+      const closedEvent = response.data
+      if (
+        closedEvent?.id !== eventId ||
+        closedEvent.status !== 'closed' ||
+        typeof closedEvent.closedAt !== 'string' ||
+        Number.isNaN(Date.parse(closedEvent.closedAt))
+      ) {
+        throw new Error('Invalid close response')
+      }
+      closeEvent(closedEvent, allTransfers)
+      setSheet(null)
+      navigate(`/events/${encodeURIComponent(eventId)}`)
+    } catch (error) {
+      if (controller.signal.aborted) return
+      setCloseError(
+        typeof error.response?.data?.error === 'string'
+          ? error.response.data.error
+          : 'Could not close this event. Please try again.',
+      )
+    } finally {
+      closeRequest.current = null
+      if (!controller.signal.aborted) setClosing(false)
+    }
   }
 
   // "you" for me, otherwise the person's name
@@ -343,7 +387,10 @@ function SettleUp() {
           <Button
             disabled={!canClose}
             className="disabled:bg-gray-200 disabled:text-gray-500"
-            onClick={() => setSheet('close')}
+            onClick={() => {
+              setCloseError('')
+              setSheet('close')
+            }}
           >
             Close event
           </Button>
@@ -366,10 +413,14 @@ function SettleUp() {
         <ConfirmDialog
           title={`Close ${event.name}?`}
           description="Closed events are read-only. No one can add receipts or change payments."
-          confirmLabel="Close event"
+          confirmLabel={closing ? 'Closing…' : 'Close event'}
+          busy={closing}
           onConfirm={confirmClose}
           onClose={() => setSheet(null)}
-        />
+        >
+          {closeError && <p role="alert">{closeError}</p>}
+          {closing && <p role="status">Closing event…</p>}
+        </ConfirmDialog>
       )}
 
       {!isClosed && markingPaid && (

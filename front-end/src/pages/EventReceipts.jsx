@@ -40,10 +40,11 @@ function EventReceipts() {
   // set by Join event, so a guest sees their return link right away (#45)
   const personalLink = state?.personalLink
 
-  // data loaded from the mock files
-  const [event, setEvent] = useState(null)
+  const [loadedEvent, setEvent] = useState(null)
   const { closedEvents } = useContext(EventClosureContext)
   const closure = closedEvents[eventId]
+  // Prefer the close response to a subsequent GET of the unchanged mock event.
+  const event = closure?.event ?? loadedEvent
   const isClosed = Boolean(closure) || event?.status === 'closed'
   const [user, setUser] = useState(null)
   const [link, setLink] = useState(null)

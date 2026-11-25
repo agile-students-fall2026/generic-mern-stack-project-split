@@ -39,12 +39,14 @@ function App() {
     }))
   }
 
-  function closeEvent(eventId, transfers) {
+  function closeEvent(event, transfers) {
     setClosedEvents(events => ({
       ...events,
-      [eventId]: events[eventId] ?? {
-        status: 'closed',
-        closedAt: new Date().toISOString(),
+      [event.id]: events[event.id] ?? {
+        status: event.status,
+        closedAt: event.closedAt,
+        event: structuredClone(event),
+        // Payment confirmations are session-only until the back-end persists them.
         transfers: transfers.map(transfer => ({ ...transfer })),
       },
     }))
