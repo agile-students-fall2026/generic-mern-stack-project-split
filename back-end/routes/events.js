@@ -232,6 +232,27 @@ router.post('/:eventId/receipts', (req, res) => {
   })
 })
 
+// the organizer renames someone in the event (#129). Like the payment routes,
+// it replies with the new state and saves nothing
+router.post('/:eventId/participants/:participantId/rename', (req, res) => {
+  const event = eventDetails.find(item => item.id === req.params.eventId)
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+  const participant = event.participants.find(
+    person => person.id === req.params.participantId,
+  )
+  if (!participant) {
+    return res.status(404).json({ error: 'Participant not found.' })
+  }
+  // req.body is undefined when the request has no JSON body
+  const name = req.body?.name
+  if (typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Enter a name.' })
+  }
+  res.json({ ...participant, name: name.trim() })
+})
+
 router.post('/:eventId/receipts/photo', (req, res, next) => {
   if (!eventDetails.some(item => item.id === req.params.eventId)) {
     return res.status(404).json({ error: 'Event not found.' })
