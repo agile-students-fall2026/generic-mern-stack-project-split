@@ -35,6 +35,8 @@ function SettleUp() {
   const [markingPaid, setMarkingPaid] = useState(null)
   const [savingPaid, setSavingPaid] = useState(false)
   const [markPaidError, setMarkPaidError] = useState('')
+  const [savingConfirm, setSavingConfirm] = useState(false)
+  const [confirmError, setConfirmError] = useState('')
   const [announcement, setAnnouncement] = useState('')
   const [fewestTransfers, setFewestTransfers] = useState([])
   const [showFewest, setShowFewest] = useState(false)
@@ -180,11 +182,39 @@ function SettleUp() {
     }
   }
 
-  // mark the payment in the dialog as settled (wireframe 28)
+  // the receiver confirms the money arrived; the reply settles it (wireframe 28, #138)
   function confirmPayment() {
-    if (isClosed) return
-    setStatus(confirming, 'confirmed')
-    setConfirming(null)
+    if (isClosed || savingConfirm) return
+    const target = confirming
+    setSavingConfirm(true)
+    setConfirmError('')
+    backend
+      .post(`/api/events/${encodeURIComponent(eventId)}/payments/confirm`, {
+        fromId: target.fromId,
+        toId: target.toId,
+        plan: showFewest ? 'fewest' : 'all',
+      })
+      .then(response => {
+        setStatus(target, response.data.status)
+        setAnnouncement(
+          'Confirmed ' +
+            formatMoney(target.amountCents) +
+            ' from ' +
+            nameOf(target.fromId) +
+            '. This payment is settled.',
+        )
+        setConfirming(null)
+      })
+      .catch(error => {
+        // the server explains a 404 or 409; otherwise the request never got there
+        setConfirmError(
+          error.response?.data?.error ||
+            'Could not confirm this payment. Try again.',
+        )
+      })
+      .finally(() => {
+        setSavingConfirm(false)
+      })
   }
 
   // I paid outside the app, now it waits for the other person (wireframe 26)
@@ -383,10 +413,19 @@ function SettleUp() {
             '?'
           }
           description="Confirm only once the money has arrived. This settles the payment for everyone."
-          confirmLabel="Confirm"
+          confirmLabel={savingConfirm ? 'Confirming…' : 'Confirm'}
           onConfirm={confirmPayment}
-          onClose={() => setConfirming(null)}
-        />
+          onClose={() => {
+            setConfirming(null)
+            setConfirmError('')
+          }}
+        >
+          {confirmError && (
+            <p role="alert" className="text-sm font-semibold">
+              {confirmError}
+            </p>
+          )}
+        </ConfirmDialog>
       )}
     </Layout>
   )
