@@ -67,6 +67,21 @@ router.get('/:eventId', (req, res) => {
   res.status(404).json({ error: 'Event not found.' })
 })
 
+// Mock response only: eligibility is checked by the front-end for this sprint.
+// Return a closed copy without changing the shared event or settlement data.
+router.post('/:eventId/close', (req, res) => {
+  const event = eventDetails.find(item => item.id === req.params.eventId)
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+
+  res.json({
+    ...event,
+    status: 'closed',
+    closedAt: event.closedAt ?? new Date().toISOString(),
+  })
+})
+
 router.post('/:eventId/participants/merge', (req, res) => {
   const event = eventDetails.find(item => item.id === req.params.eventId)
   if (!event) {
