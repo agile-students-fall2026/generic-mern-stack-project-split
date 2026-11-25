@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import EventClosureContext from '../EventClosureContext.js'
-import api, { backend } from '../api.js'
+import { backend } from '../api.js'
 import Button from '../components/Button.jsx'
 import Layout from '../components/Layout.jsx'
 import TextField from '../components/TextField.jsx'
@@ -51,6 +51,9 @@ function AddReceipt({ addReceipt }) {
   const [included, setIncluded] = useState([])
   const [message, setMessage] = useState('')
   const [saved, setSaved] = useState(null)
+
+  const [saving, setSaving] = useState(false)
+
   const [merchant, setMerchant] = useState('')
   // both keyed by photo so a result for an earlier photo never shows
   const [stored, setStored] = useState(null)
@@ -66,8 +69,8 @@ function AddReceipt({ addReceipt }) {
   const [percentages, setPercentages] = useState([])
 
   useEffect(() => {
-    api
-      .get('/events/' + encodeURIComponent(eventId) + '.json')
+    backend
+      .get('/api/events/' + encodeURIComponent(eventId))
       .then(response => {
         const data = response.data
         if (data.id !== eventId || !Array.isArray(data.participants)) {
@@ -182,8 +185,9 @@ function AddReceipt({ addReceipt }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (saved) return
-
+    if (saved || saving) {
+      return
+    }
     if (
       !event ||
       event.id !== eventId ||
@@ -290,6 +294,31 @@ function AddReceipt({ addReceipt }) {
       split: split,
       photoUrl: photoUrl,
       shares: shares,
+    }
+
+    if (split === 'equal') {
+      setMessage('')
+      setSaving(true)
+      backend
+        .post(
+          '/api/events/' + encodeURIComponent(eventId) + '/receipts',
+          receipt,
+        )
+        .then(response => {
+          setSaving(false)
+
+          if (addReceipt(response.data) === false) {
+            setMessage('This event is closed. New receipts cannot be added.')
+            return
+          }
+          setSaved(response.data)
+        })
+        .catch(() => {
+          setSaving(false)
+          setMessage('Could not save this receipt. Please try again.')
+        })
+
+      return
     }
 
     if (addReceipt(receipt) === false) {
@@ -478,6 +507,7 @@ function AddReceipt({ addReceipt }) {
         {message && <p role="alert">{message}</p>}
         <button
           type="submit"
+          disabled={saving}
           className="min-h-12 w-full rounded-lg bg-black px-4 py-3 font-semibold text-white"
         >
           Save receipt
