@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-// Session-only closure snapshots; refreshing restores the mock data.
+// Session-only snapshots of close replies and locally confirmed transfers.
 const EventClosureContext = createContext({
   closedEvents: {},
   closeEvent: () => {},
