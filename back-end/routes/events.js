@@ -116,6 +116,88 @@ router.post('/:eventId/payments/confirm', (req, res) => {
   res.json({ ...transfer, status: 'confirmed' })
 })
 
+router.post('/:eventId/receipts', (req, res) => {
+  const eventId = req.params.eventId
+  let event = null
+
+  for (const item of eventDetails) {
+    if (item.id === eventId) {
+      event = item
+      break
+    }
+  }
+
+  if (!event) {
+    return res.status(404).json({ error: 'Event not found.' })
+  }
+
+  const receipt = req.body
+  if (!receipt) {
+    return res.status(400).json({ error: 'Enter a positive total in cents.' })
+  }
+
+  const totalCents = receipt.totalCents
+  if (!Number.isSafeInteger(totalCents) || totalCents <= 0) {
+    return res.status(400).json({ error: 'Enter a positive total in cents.' })
+  }
+
+  let payerFound = false
+  for (const person of event.participants) {
+    if (person.id === receipt.payerId) {
+      payerFound = true
+    }
+  }
+
+  if (!payerFound) {
+    return res.status(400).json({ error: 'Choose a participant who paid.' })
+  }
+
+  const shares = receipt.shares
+  if (!Array.isArray(shares) || shares.length === 0) {
+    return res.status(400).json({ error: 'Choose at least one participant.' })
+  }
+
+  let sum = 0
+  for (const share of shares) {
+    if (!share) {
+      return res
+        .status(400)
+        .json({ error: 'Enter valid share amounts in cents.' })
+    }
+
+    const amountCents = share.amountCents
+    if (!Number.isSafeInteger(amountCents) || amountCents < 0) {
+      return res
+        .status(400)
+        .json({ error: 'Enter valid share amounts in cents.' })
+    }
+
+    sum = sum + amountCents
+  }
+
+  if (sum !== totalCents) {
+    return res.status(400).json({ error: 'Shares must add up to the total.' })
+  }
+
+  const mockReceipt = lisbon.receipts[0]
+  let photoUrl = mockReceipt.photoUrl
+  if (receipt.photoUrl !== undefined) {
+    photoUrl = receipt.photoUrl
+  }
+
+  res.status(201).json({
+    ...mockReceipt,
+    id: randomUUID(),
+    eventId: eventId,
+    merchant: receipt.merchant,
+    date: receipt.date,
+    totalCents: totalCents,
+    payerId: receipt.payerId,
+    photoUrl: photoUrl,
+    shares: shares,
+  })
+})
+
 router.post('/:eventId/receipts/photo', (req, res, next) => {
   if (!eventDetails.some(item => item.id === req.params.eventId)) {
     return res.status(404).json({ error: 'Event not found.' })

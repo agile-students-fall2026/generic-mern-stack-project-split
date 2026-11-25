@@ -34,6 +34,69 @@ describe('GET /api/events', () => {
   })
 })
 
+function makeReceipt() {
+  return {
+    merchant: 'Lunch',
+    date: '2026-11-25',
+    totalCents: 1000,
+    payerId: 'p_alex',
+    split: 'equal',
+    photoUrl: null,
+    shares: [
+      { participantId: 'p_alex', amountCents: 500, percent: null },
+      { participantId: 'p_maya', amountCents: 500, percent: null },
+    ],
+  }
+}
+
+it('returns 400 when the total is not a positive whole cent amount', async () => {
+  const receipt = makeReceipt()
+  receipt.totalCents = 1000.5
+  const res = await request
+    .execute(app)
+    .post('/api/events/evt_lisbon/receipts')
+    .send(receipt)
+  expect(res).to.have.status(400)
+})
+
+it('returns 400 when the payer is not in the event', async () => {
+  const receipt = makeReceipt()
+  receipt.payerId = 'not-a-participant'
+  const res = await request
+    .execute(app)
+    .post('/api/events/evt_lisbon/receipts')
+    .send(receipt)
+  expect(res).to.have.status(400)
+})
+
+it('returns 400 when nobody is included', async () => {
+  const receipt = makeReceipt()
+  receipt.shares = []
+  const res = await request
+    .execute(app)
+    .post('/api/events/evt_lisbon/receipts')
+    .send(receipt)
+  expect(res).to.have.status(400)
+})
+
+it('returns 400 when the shares do not add up to the total', async () => {
+  const receipt = makeReceipt()
+  receipt.shares[1].amountCents = 499
+  const res = await request
+    .execute(app)
+    .post('/api/events/evt_lisbon/receipts')
+    .send(receipt)
+  expect(res).to.have.status(400)
+})
+
+it('returns 404 when the event does not exist', async () => {
+  const res = await request
+    .execute(app)
+    .post('/api/events/does-not-exist/receipts')
+    .send(makeReceipt())
+  expect(res).to.have.status(404)
+})
+
 describe('POST /api/events', () => {
   it('responds with 201 and the new event with its id and invite code', async () => {
     const res = await request
@@ -65,5 +128,29 @@ describe('POST /api/events', () => {
     const res = await request.execute(app).post('/api/events')
     expect(res).to.have.status(400)
     expect(res.body.error).to.be.a('string').that.is.not.empty
+  })
+})
+
+describe('POST /api/events/evt_lisbon/receipts', () => {
+  it('creates a receipt for an equal split', async () => {
+    const res = await request
+      .execute(app)
+      .post('/api/events/evt_lisbon/receipts')
+      .send({
+        merchant: 'Lunch',
+        date: '2026-11-25',
+        totalCents: 1000,
+        payerId: 'p_alex',
+        split: 'equal',
+        photoUrl: null,
+        shares: [
+          { participantId: 'p_alex', amountCents: 500, percent: null },
+          { participantId: 'p_maya', amountCents: 500, percent: null },
+        ],
+      })
+
+    expect(res).to.have.status(201)
+    expect(res.body.id).to.be.a('string').that.is.not.empty
+    expect(res.body.totalCents).to.equal(1000)
   })
 })
